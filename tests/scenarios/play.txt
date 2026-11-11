@@ -1,0 +1,79 @@
+# The instrument in the host simulator, as a player uses it (UI-001 .. UI-006, MIDI-001 .. MIDI-010, RT-005).
+#   sh build.sh --host && sh tests/scenarios/run.sh
+wait 900
+shot boot.png
+# boot: the nylon guitar, eight voices, nothing sounding
+expect instrument 5
+expect family 1
+expect engine 0
+expect polyphony 8
+expect voices 0
+expect page 0
+# a key plays: a voice, a note out over USB, and sound
+key 7 down 100
+wait 60
+expect voices 1
+expect midi_out 1
+wav pluck.wav
+wait 400
+wavstop
+expect peak_db_min -30
+expect peak_db_max <0
+shot playing.png
+key 7 up
+wait 1500
+expect voices 0
+# octave
+tap OCT+
+wait 30
+expect octave 1
+tap OCT-
+tap OCT-
+wait 30
+expect octave -1
+tap OCT+
+wait 30
+expect octave 0
+# PRESET moves within the family, ALGORITHM between families
+spin PRESET 1
+wait 30
+expect instrument 6
+expect family 1
+spin PRESET 10
+wait 30
+expect instrument 9
+spin ALGO 1
+wait 30
+expect family 2
+expect instrument 10
+expect engine 1
+spin ALGO -2
+wait 30
+expect family 0
+expect instrument 0
+# the user family is empty until something is saved: ALGORITHM stays where it is
+spin ALGO 4
+wait 30
+expect family 3
+spin ALGO 1
+wait 30
+expect family 3
+# SELECT walks every instrument end to end
+spin SELECT -20
+wait 30
+expect instrument 0
+spin SELECT 12
+wait 30
+expect instrument 12
+expect engine 1
+# a bowed note sustains while held
+key 7 down 110
+wait 1000
+expect voices 1
+wav bow.wav
+wait 500
+wavstop
+expect peak_db_min -30
+key 7 up
+wait 1500
+expect voices 0

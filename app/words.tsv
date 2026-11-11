@@ -1,5 +1,15 @@
 # SPDX-License-Identifier: MIT
 # fm1-violioliolol screen-reader words: visible text<TAB>spoken text.
 # url: https://profikid.github.io/fm1-violioliolol/words/
+VIOLIOLIOLOL	violioliolol
 fm1-violioliolol	fm1 violioliolol
-K1 VOICES	knob one, voice count
+PU BLEND	pickup blend
+BOW PRESS	bow pressure
+VIB RATE	vibrato rate
+PLUCK POS	pluck position
+PICKUP POS	pickup position
+BOW POS	bow position
+CLEAN ELEC	clean electric
+DRIVE ELEC	driven electric
+XRUNS	x runs
+OCT	octave

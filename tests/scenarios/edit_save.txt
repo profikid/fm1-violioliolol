@@ -1,0 +1,114 @@
+# Editing an instrument, saving it to a user slot, and finding it again after a reboot (INS-005, UI-002 .. UI-004).
+wait 900
+expect store_writes 0
+spin ALGO 1
+wait 30
+expect instrument 10
+expect edited 0
+# K1 on the violin's first page is bow pressure (60)
+expect row0 60
+spin K1 5
+wait 30
+expect row0 80
+expect live0 80
+expect edited 1
+spin K1 -100
+wait 30
+expect row0 0
+spin K1 3
+wait 30
+expect row0 12
+# EDIT: the second page
+tap EDIT
+wait 30
+expect page 1
+spin K3 2
+wait 30
+tap EDIT
+wait 30
+expect page 0
+# SAVE: a slot is offered; anything but SAVE cancels
+tap SAVE
+wait 30
+expect saving 1
+tap HOME
+wait 30
+expect saving 0
+expect store_writes 0
+# SAVE, a slot, SAVE again keeps it
+tap SAVE
+wait 30
+expect saving 1
+spin PRESET 2
+wait 30
+tap SAVE
+wait 300
+expect saving 0
+expect edited 0
+expect users 1
+expect instrument 102
+expect family 4
+expect store_writes 2
+# a second preset in another slot
+spin K2 4
+wait 30
+tap SAVE
+wait 30
+spin PRESET 3
+wait 30
+tap SAVE
+wait 300
+expect users 2
+expect instrument 105
+reboot
+wait 900
+expect users 2
+expect instrument 105
+expect family 4
+expect row0 12
+expect edited 0
+# PRESET moves between the used slots only
+spin PRESET -1
+wait 30
+expect instrument 102
+spin PRESET -1
+wait 30
+expect instrument 102
+# ALGORITHM leaves the user family for the factory's
+spin ALGO -1
+wait 30
+expect family 3
+spin ALGO 1
+wait 30
+expect family 4
+expect instrument 102
+# the settings page's own save: the polyphony and the key curve survive a reboot
+tap GLO
+wait 30
+expect page 2
+spin K1 -4
+wait 30
+expect polyphony 4
+spin K3 2
+wait 30
+expect curve 2
+tap SAVE
+wait 300
+tap GLO
+wait 30
+reboot
+wait 900
+expect polyphony 4
+expect curve 2
+expect instrument 102
+# a failed write is said, not hidden
+flash_fail 1
+spin K1 1
+wait 30
+listen
+tap SAVE
+wait 30
+tap SAVE
+wait 300
+said FAILED
+flash_fail 0

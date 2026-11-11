@@ -1,4 +1,7 @@
 app/build/
+app/web/
 tests/engine/build/
+tests/scenarios/out/
+*.fwsc
 __pycache__/
 *.pyc
