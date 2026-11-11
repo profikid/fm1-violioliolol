@@ -33,7 +33,7 @@
       <div class="eyebrow">Physical modelling · No samples · Real-time synthesis</div>
       <h1>fm1-<span>violioliolol</span></h1>
       <p class="sub">Turn the M-VAVE FM-1 into a playable acoustic instrument laboratory. Pluck, bow and excite virtual strings — generated in real time, not replayed from recordings.</p>
-      <div class="notice">◉ DEVELOPMENT STATUS: SPECIFICATION / HARDWARE VALIDATION</div>
+      <div class="notice">◉ DEVELOPMENT STATUS: DSP PROTOTYPE / DEVICE TESTING NEXT</div>
       <div class="hero-grid">
         <div class="panel">
           <h2>String engine / concept visualisation</h2>
@@ -58,11 +58,11 @@
       <div class="section-head"><h2>Build sequence</h2><span>NO UI-FIRST DETOURS</span></div>
       <div class="steps">
         <div class="step"><b>PHASE 01 — BASELINE</b><p>Use the same firmware base as CHOPPAH. Pin the SDK, verify the audio callback and reconcile block-size details.</p></div>
-        <div class="step"><b>PHASE 02 — DSP BENCH</b><p>Measure plucked-string voices at increasing polyphony. Record CPU ticks, memory use and audio overruns on real hardware.</p></div>
-        <div class="step"><b>PHASE 03 — BOWED MODEL</b><p>Prototype one nonlinear bowed string, then assess voice count and musical control response.</p></div>
+        <div class="step"><b>PHASE 02 — DSP PROTOTYPE</b><p>Karplus–Strong voice and 1/2/4/8 voice test harness are implemented. Next: measure CPU ticks, memory and overruns on the FM-1.</p></div>
+        <div class="step"><b>PHASE 03 — DEVICE BENCH</b><p>Run the 1/2/4/8 voice benchmark on the FM-1, then prototype one nonlinear bowed string.</p></div>
       </div>
     </section>
-    <footer><span>fm1-violioliolol · M-VAVE FM-1</span><span>Experimental project · No working instrument engine claimed yet</span><span><a href="https://github.com/profikid/fm1-violioliolol">Source on GitHub ↗</a></span></footer>
+    <footer><span>fm1-violioliolol · M-VAVE FM-1</span><span>Plucked-string prototype implemented · FM-1 timing not yet verified</span><span><a href="https://github.com/profikid/fm1-violioliolol">Source on GitHub ↗</a></span></footer>
   </div>
   <script>
     const wave=document.getElementById('wave');
