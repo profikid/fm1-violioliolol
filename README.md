@@ -1,20 +1,31 @@
 # fm1-violioliolol — FM-1 Physical Modelling Instrument
 
-fm1-violioliolol is an experimental physical-modelling instrument project for the M-VAVE FM-1.
+An experimental physical-modelling instrument for the M-VAVE FM-1. The goal is to synthesise plucked and bowed strings in real time—no recorded samples or sample playback.
 
-The goal is to synthesise plucked and bowed string instruments in real time using DSP models — not recorded samples or sample playback.
+## Current engineering status
+
+- **Implemented:** first mono Karplus–Strong-style plucked-string voice in `dsp/string_model.c`.
+- **Implemented:** fixed-size fractional-delay loop, two-point loss filter and deterministic noise excitation.
+- **Implemented:** FM-1 benchmark app. Turn encoder **K1** to select 1, 2, 4 or 8 concurrent voices; the first N key LEDs show the selected load.
+- **Verified:** native DSP test passes. One voice uses 8,216 bytes of state; eight voices use 65,728 bytes.
+- **Not yet verified:** FM-1 target build, audio timing, overruns, and actual hardware polyphony. Desktop benchmark figures are not hardware performance claims.
+- **Not implemented:** bowed-string synthesis, body/modal resonators, finished instrument UI or presets.
 
 ## Firmware base
 
-fm1-violioliolol will use the same FM-1 firmware base as [CHOPPAH](https://github.com/profikid/fm1-break-choppah). It is a separate instrument project, not a separate hardware SDK port.
+The project uses the same platform base as [CHOPPAH](https://github.com/profikid/fm1-break-choppah), pinned as the `base/` Git submodule. The pin is recorded in [docs/engineering-baseline.md](docs/engineering-baseline.md). The application uses the fm1-base 256-frame audio contract at 44.1 kHz.
 
-## First engineering milestones
+## Build and test
 
-1. Pin the CHOPPAH firmware base and SDK revision; verify the real audio callback, memory map and block size.
-2. Build a hardware DSP benchmark harness for plucked-string voices at increasing polyphony.
-3. Prototype one nonlinear bowed-string voice and measure its CPU and memory cost.
+```sh
+git clone --recurse-submodules https://github.com/profikid/fm1-violioliolol.git
+cd fm1-violioliolol
+sh build.sh test          # native correctness + host throughput harness
+sh build.sh --host        # fm1-base host simulator
+sh build.sh               # FM-1 firmware; requires the JieLi toolchain and AC79 SDK
+```
 
-The initial voice-count goals are targets only; they must be established by measurements on real FM-1 hardware.
+The host benchmark exercises 1, 2, 4 and 8 voices. Use the FM-1 benchmark app for real device measurements; record block size, peak audio ticks, overruns and memory use before setting any polyphony target.
 
 ## Project site
 
