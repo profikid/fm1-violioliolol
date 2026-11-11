@@ -17,6 +17,8 @@ int main(void)
     float output[4096] = {0.0f};
     float peak = 0.0f;
     float energy = 0.0f;
+    float pitch_corr = 0.0f;
+    float pitch_energy = 0.0f;
     uint32_t i;
 
     pm_string_init(&voice, 12345u);
@@ -35,6 +37,13 @@ int main(void)
     }
     CHECK(peak > 0.001f, "plucked string must produce audio");
     CHECK(energy > 0.01f, "plucked string must contain energy");
+    for (i = 1024u; i < 4096u - 401u; ++i) {
+        pitch_corr += output[i] * output[i + 401u];
+        pitch_energy += output[i] * output[i];
+    }
+    CHECK(pitch_energy > 0.01f, "pitch test window must contain energy");
+    CHECK(pitch_corr / pitch_energy > 0.65f,
+          "110 Hz note should show strong correlation near its 401-sample period");
     CHECK(pm_string_voice_bytes() >= sizeof(voice.delay),
           "voice memory report must include delay line");
 
