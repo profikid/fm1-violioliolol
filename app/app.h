@@ -5,6 +5,7 @@
 
 #define APP_NAME "fm1-violioliolol"
 #define APP_BLOCK 256u
+#define APP_CPU_KHZ                    /* expose the platform CPU clock diagnostic */
 
 /* fm1-base owns the panel calibration object. */
 enum { OBJ_PANEL, OBJ_NOBJ };
