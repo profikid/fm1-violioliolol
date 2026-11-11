@@ -11,12 +11,12 @@ not a separate SDK port.
 | fm1-base submodule | `charlesvestal/fm1-base@317cb86cc60d6286fa80a02743e94e6a60ff842d` | Exact platform source referenced by that CHOPPAH commit |
 | Public FM1 SDK | `m-vave/fm1_open@4c7496daac04a95ff10d1afdcc8f9ead2dbabc41` | SDK comparison point; not a substitute for fm1-base |
 
-The CHOPPAH repository pins `base/` as a Git submodule. Its platform notes
-describe 44.1 kHz stereo and 256-frame render blocks. The separately inspected
-public SDK header at the pin above declares 128 frames. These are different
-source trees/contracts; do not mix the constants. The implementation must take
-its block size from the pinned fm1-base build and audio callback, then record
-that result here before the device adapter is written.
+The repository now pins `base/` to the exact fm1-base Gitlink used by the
+CHOPPAH reference commit. In that pinned platform, `device/unity.c` defines
+the default `APP_BLOCK` as 256 frames; this app also sets `APP_BLOCK 256u`
+explicitly in `app/app.h`. At 44.1 kHz this is a 5.805 ms audio block.
+The public `fm1_open` SDK header separately declares 128 frames, but that is
+not the platform contract used by this project. Do not mix those constants.
 
 ## First DSP prototype
 
