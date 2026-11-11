@@ -6,7 +6,7 @@
  * instrument, not the finished playable UI.
  */
 #include "app.h"
-#include "string_model.h"
+#include "../dsp/string_model.h"
 
 #define BENCH_MAX_VOICES 8u
 #define BENCH_MAX_BLOCK 256u
