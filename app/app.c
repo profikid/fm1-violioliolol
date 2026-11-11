@@ -18,7 +18,7 @@
 
 static pm_string_voice_t voices[BENCH_MAX_VOICES] PLAT_POOL;
 static float mix[ BENCH_MAX_BLOCK ];
-static uint8_t active_voices = 1u;
+static volatile uint8_t active_voices = 1u;
 static uint8_t initialized;
 
 static const float bench_frequency[BENCH_MAX_VOICES] = {
@@ -83,21 +83,17 @@ static void bench_set_voices(uint8_t count)
     uint32_t i;
     if (count != 1u && count != 2u && count != 4u && count != 8u)
         return;
-    active_voices = count;
-    for (i = 0; i < BENCH_MAX_VOICES; ++i) {
-        if (i < active_voices)
-            (void)pm_string_note_on(&voices[i], bench_frequency[i], 0.997f, 0.10f);
-        else
-            pm_string_note_off(&voices[i]);
-    }
+    active_voices = count; /* publish one byte; never edit a live delay line from the UI task */
     plat_leds(0u, (1u << active_voices) - 1u);
 }
 
 void app_init(void)
 {
     uint32_t i;
-    for (i = 0; i < BENCH_MAX_VOICES; ++i)
+    for (i = 0; i < BENCH_MAX_VOICES; ++i) {
         pm_string_init(&voices[i], 0x51A1u + i * 7919u);
+        (void)pm_string_note_on(&voices[i], bench_frequency[i], 0.997f, 0.10f);
+    }
     initialized = 1u;
     bench_set_voices(1u);
 }
@@ -110,8 +106,11 @@ void app_render(int32_t *lr, uint32_t n, uint32_t master_q12)
         return;
     for (i = 0; i < n; ++i)
         mix[i] = 0.0f;
-    for (v = 0; v < active_voices; ++v)
-        pm_string_render(&voices[v], mix, n);
+    {
+        const uint32_t voice_count = active_voices;
+        for (v = 0; v < voice_count; ++v)
+            pm_string_render(&voices[v], mix, n);
+    }
     gain = ((float)master_q12 * (1.0f / 4096.0f)) * 8388607.0f;
     for (i = 0; i < n; ++i) {
         float sample = mix[i] * gain;
@@ -126,9 +125,7 @@ void app_render(int32_t *lr, uint32_t n, uint32_t master_q12)
 
 void app_panic(void)
 {
-    uint32_t i;
-    for (i = 0; i < BENCH_MAX_VOICES; ++i)
-        pm_string_note_off(&voices[i]);
+    active_voices = 0u;
 }
 
 void app_ui_init(void)
