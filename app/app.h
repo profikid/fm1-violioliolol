@@ -8,7 +8,7 @@
 
 /* fm1-base owns the panel calibration object. */
 enum { OBJ_PANEL, OBJ_NOBJ };
-#define APP_STORE_MAP {0xFC000u}
+#define APP_STORE_MAP {0xDC000u}
 
 /* fm1-base application contract. */
 void app_init(void);
