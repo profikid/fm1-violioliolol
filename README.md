@@ -2,6 +2,10 @@
 
 An experimental physical-modelling instrument for the M-VAVE FM-1. The goal is to synthesise plucked and bowed strings in real time—no recorded samples or sample playback.
 
+## Product specification
+
+The complete living specification is in [docs/PRD.md](docs/PRD.md). It tracks every requirement by ID with an editable status (`not-started`, `planned`, `in-progress`, `implemented`, `verified`, `blocked`, `deferred` or `not-applicable`) and an evidence field. Update the requirement row when implementation or verification changes; do not mark host-only results as FM-1 hardware verification.
+
 ## Current engineering status
 
 - **Implemented:** first mono Karplus–Strong-style plucked-string voice in `dsp/string_model.c`.
