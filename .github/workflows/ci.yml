@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  dsp-and-host-build:
+  dsp-and-host:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout with pinned fm1-base
@@ -22,11 +22,25 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install host build dependency
-        run: python -m pip install --upgrade pip pillow
+      - name: Install host build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libfribidi0
+          python -m pip install --upgrade pip pillow
 
       - name: Native DSP tests and throughput harness
         run: sh build.sh test
 
-      - name: Build fm1-base host simulator
+      - name: Build the fm1-base host simulator
         run: sh build.sh --host
+
+      - name: Firmware scenarios in the simulator
+        run: sh tests/scenarios/run.sh build/scenarios
+
+      - name: Keep the simulator's output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scenarios
+          path: build/scenarios
+          if-no-files-found: ignore

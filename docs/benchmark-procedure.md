@@ -1,52 +1,73 @@
 # FM-1 benchmark procedure
 
-This is a first-pass measurement app, not the final instrument UI.
+The instrument has the benchmark built in: the PERF page's BENCH row holds a
+number of voices of the current instrument sounding and keeps them running
+after they would have rung out, so the load stays constant while you read it.
 
 ## Controls
 
-- Turn **K1** clockwise to step through 1 → 2 → 4 → 8 voices.
-- Turn **K1** counter-clockwise to reduce the load.
-- The first N key LEDs light to indicate the selected voice count.
-- The screen reports the platform's render CPU percentage, CPU clock reading
-  and cumulative audio xrun count.
+1. Pick the instrument to measure (ALGORITHM, PRESET).
+2. Press **GLOBAL** for the PERF page.
+3. Turn **K4** (BENCH): OFF → 1 → 2 → 4 → 8 → 12 voices.
+4. The status line shows the render's CPU load and the xruns since power-on;
+   the voice boxes show what is running.
+5. **HOME** stops the benchmark.
 
-All eight voices are initialized once at boot, before the audio callback starts.
-K1 only publishes the selected voice count; the UI task never edits a live
-delay line. Newly enabled voices begin from their preloaded pluck excitation.
-When you reduce and later increase the count, those voices resume from where
-they were paused. Reboot between measurement passes when you need a fresh,
-repeatable excitation. The renderer continues to process the selected voice
-count even after the strings naturally decay.
+Changing the instrument keeps the benchmark running on the new one.
 
 ## Measurement run
 
-1. Build and install a test firmware from this repository only after the
-   bootloader/recovery path is known good. This project does not alter the
-   bootloader.
-2. Use a wired output for measurements; keep Bluetooth disabled.
-3. At each voice count (1, 2, 4, 8), wait at least 10 seconds.
-4. Record the displayed CPU percentage, CPU clock, xrun count and the voice
-   state memory from the build.
-5. Repeat each count at least three times. Record the maximum CPU percentage
-   and whether the xrun count increased.
-6. Stop at the first count that produces xruns or unstable audio. Do not treat
-   the next count as a target.
+1. Install the release package with the official updater; this project never
+   touches the bootloader or recovery.
+2. Use a wired output; Bluetooth is not built in.
+3. Measure NYLON (plucked, with a body) and CELLO (bowed, with a body) at
+   minimum; DRIVE ELEC adds the drive stage.
+4. At each voice count wait at least 10 seconds, then write down the CPU
+   percentage and whether the xrun count moved.
+5. Repeat each count three times; record the highest CPU percentage.
+6. Stop at the first count that produces xruns or audible glitches. That count
+   is over budget; the one below it is the candidate, not a guarantee.
+7. Play the instrument at the chosen polyphony with chords and fast repeated
+   notes for five minutes: does SHED ever light?
 
-The display reads `plat_cpu_pct()`, `plat_cpu_khz()` and `plat_xruns()` from
-the pinned fm1-base platform. CPU percentage is the platform's audio-render
-load relative to its block budget; xruns are cumulative since boot.
+## Record
 
-## Current memory footprint
+| Build | Instrument | Voices | CPU % (max of 3) | Xruns moved | SHED | Notes |
+|---|---|---|---|---|---|---|
+| v0.1 | NYLON | 1 | | | | |
+| v0.1 | NYLON | 2 | | | | |
+| v0.1 | NYLON | 4 | | | | |
+| v0.1 | NYLON | 8 | | | | |
+| v0.1 | NYLON | 12 | | | | |
+| v0.1 | CELLO | 1 | | | | |
+| v0.1 | CELLO | 2 | | | | |
+| v0.1 | CELLO | 4 | | | | |
+| v0.1 | CELLO | 8 | | | | |
+| v0.1 | CELLO | 12 | | | | |
 
-The native build reports 8,216 bytes per voice:
-- 8,192 bytes for the 2,048-sample float delay line;
-- 24 bytes for the remaining voice state (compiler ABI dependent).
+Then update VOX-005..007 and MIDI-010 in the [PRD](PRD.md) and set
+`PM_DEFAULT_POLYPHONY` in `dsp/engine.h` to the result.
 
-The FM-1 app reserves eight voice states in the platform pool: 65,728 bytes.
-This is a static reservation, not a measured total firmware RAM figure.
+## Memory (from the v0.1 firmware build)
+
+| | Bytes |
+|---|---|
+| Firmware image | 118,852 |
+| RAM .data + .bss | 18,900 of 98,304 |
+| Platform pool used | 185,984 of 344,064 |
+| Engine (12 voices, body, output, queue) | 151,160 |
+| One voice slot (the larger of the two models) | 12,460 |
+| Plucked voice / bowed voice | 8,384 / 12,428 |
+
+## Host reference
+
+`sh build.sh test` ends with `bench_engine`: the whole engine at 1 to 12
+voices per model on the build machine, about 130 ns a frame for 12 plucked
+voices and 160 ns for 12 bowed ones on a desktop. That is a regression signal
+only.
 
 ## What the numbers do not mean
 
-- Desktop nanoseconds per sample are not FM-1 CPU timing.
-- A successful host build is not a successful device firmware build.
-- One board's result is not a guaranteed polyphony limit for every unit.
+- Desktop nanoseconds per frame are not FM-1 CPU timing.
+- A firmware that builds and passes fm1-base's checks has not been heard.
+- One board's result is not a polyphony guarantee for every unit.

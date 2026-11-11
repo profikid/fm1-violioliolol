@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "site/**"
+      - "app/words.tsv"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -24,8 +25,26 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout with pinned fm1-base
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # the screen reader's words file (fm1-base tools/gen_words.py): the firmware links to
+      # https://profikid.github.io/fm1-violioliolol/words/<hash>.json, made from app/words.tsv by any build
+      - name: The screen reader's words
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libfribidi0
+          python -m pip install --upgrade pip pillow
+          sh build.sh --host
+          mkdir -p site/words
+          cp app/web/words/*.json site/words/
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

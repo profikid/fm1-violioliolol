@@ -17,7 +17,7 @@
     .notice{display:inline-flex;gap:10px;align-items:center;border:1px solid #68563a;background:#2b241b;padding:9px 13px;color:var(--gold);font-size:12px;margin-top:28px}
     .hero-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:18px;margin-top:42px}.panel{background:linear-gradient(145deg,#211e2a,#17151e);border:1px solid var(--line);padding:24px;min-width:0}
     .panel h2{font-size:13px;color:var(--gold);letter-spacing:.13em;text-transform:uppercase;margin:0 0 16px}
-    .wave{height:116px;display:flex;align-items:center;gap:3px;overflow:hidden}.wave i{display:block;flex:1;min-width:2px;background:linear-gradient(180deg,var(--gold),var(--coral));border-radius:2px;opacity:.85}
+    .shots{display:grid;grid-template-columns:1fr 1fr;gap:10px}.shots img{width:100%;height:auto;image-rendering:pixelated;border:1px solid var(--line)}.dl{display:inline-block;background:var(--gold);color:#111;padding:9px 14px;text-decoration:none;font-weight:700}
     .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}.stat{border-top:1px solid var(--line);padding-top:12px}.stat b{display:block;font-size:22px;color:var(--ink)}.stat small{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em}
     section{padding:24px 0 54px}.section-head{display:flex;align-items:baseline;gap:14px;margin-bottom:18px}.section-head h2{font-size:20px;margin:0}.section-head span{font-size:11px;color:var(--muted)}
     .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.instrument{background:var(--panel);border:1px solid var(--line);padding:19px}.instrument .tag{font-size:10px;color:var(--coral);letter-spacing:.14em;text-transform:uppercase}.instrument h3{margin:9px 0 6px;font-size:18px}.instrument p{margin:0;color:var(--muted);font-size:13px}
@@ -33,12 +33,13 @@
       <div class="eyebrow">Physical modelling · No samples · Real-time synthesis</div>
       <h1>fm1-<span>violioliolol</span></h1>
       <p class="sub">Turn the M-VAVE FM-1 into a playable acoustic instrument laboratory. Pluck, bow and excite virtual strings — generated in real time, not replayed from recordings.</p>
-      <div class="notice">◉ DEVELOPMENT STATUS: DSP PROTOTYPE / DEVICE TESTING NEXT</div>
+      <div class="notice">◉ v0.1 · EXPERIMENTAL · BUILT AND HOST-TESTED, NOT YET MEASURED ON HARDWARE</div>
+      <p style="margin:22px 0 0"><a class="dl" href="https://github.com/profikid/fm1-violioliolol/releases/latest">Download the firmware ↓</a> &nbsp; <a href="https://github.com/profikid/fm1-violioliolol/blob/main/docs/manual.md">Manual</a> &nbsp; <a href="https://github.com/profikid/fm1-violioliolol/blob/main/docs/benchmark-procedure.md">Help measure it</a></p>
       <div class="hero-grid">
         <div class="panel">
-          <h2>String engine / concept visualisation</h2>
-          <div class="wave" aria-label="Abstract waveform visualisation" id="wave"></div>
-          <div class="stats"><div class="stat"><b>0</b><small>Samples used</small></div><div class="stat"><b>44.1k</b><small>Target sample rate</small></div><div class="stat"><b>FM-1</b><small>Hardware target</small></div></div>
+          <h2>On the FM-1</h2>
+          <div class="shots"><img src="img/screen-violin.png" alt="The violin: bow pressure, bow speed, vibrato and body on K1 to K4" width="240" height="240"><img src="img/screen-nylon.png" alt="The nylon guitar: pluck position, intensity, damping and body" width="240" height="240"></div>
+          <div class="stats"><div class="stat"><b>0</b><small>Samples used</small></div><div class="stat"><b>19</b><small>Instruments</small></div><div class="stat"><b>12</b><small>Voices at most</small></div></div>
         </div>
         <div class="panel">
           <h2>Core principle</h2>
@@ -49,24 +50,20 @@
     <section>
       <div class="section-head"><h2>Instrument families</h2><span>THE TARGET SOUNDS</span></div>
       <div class="grid">
-        <article class="instrument"><div class="tag">01 / Plucked</div><h3>Bass & Guitar</h3><p>Fingerstyle, pick, slap, fretless, upright, nylon, steel and electric voices.</p></article>
-        <article class="instrument"><div class="tag">02 / Bowed</div><h3>Violin & Cello</h3><p>Continuous bow excitation with pressure, speed, position, vibrato and body response.</p></article>
-        <article class="instrument"><div class="tag">03 / Other strings</div><h3>Harp & Folk</h3><p>Mandolin, banjo, koto, zither and related plucked-string models.</p></article>
+        <article class="instrument"><div class="tag">01 / Plucked</div><h3>Bass & Guitar</h3><p>Finger, pick, slap, fretless and upright bass; nylon, steel, clean, driven and jazz guitar. Waveguides with stiffness, pluck and pickup position, buzz.</p></article>
+        <article class="instrument"><div class="tag">02 / Bowed</div><h3>Violin & Cello</h3><p>Violin, viola, cello, contrabass: a nonlinear stick-slip bow with pressure, speed, position and vibrato, through a modal body.</p></article>
+        <article class="instrument"><div class="tag">03 / Other strings</div><h3>Harp & Folk</h3><p>Harp, mandolin (a two-string course), banjo, koto and a hammered zither.</p></article>
       </div>
     </section>
     <section>
-      <div class="section-head"><h2>Build sequence</h2><span>NO UI-FIRST DETOURS</span></div>
+      <div class="section-head"><h2>Where it stands</h2><span>HONEST STATUS</span></div>
       <div class="steps">
-        <div class="step"><b>PHASE 01 — BASELINE</b><p>Use the same firmware base as CHOPPAH. Pin the SDK, verify the audio callback and reconcile block-size details.</p></div>
-        <div class="step"><b>PHASE 02 — DSP PROTOTYPE</b><p>Karplus–Strong voice and 1/2/4/8 voice test harness are implemented. Next: measure CPU ticks, memory and overruns on the FM-1.</p></div>
-        <div class="step"><b>PHASE 03 — DEVICE BENCH</b><p>Run the 1/2/4/8 voice benchmark on the FM-1, then prototype one nonlinear bowed string.</p></div>
+        <div class="step"><b>DONE — ENGINE</b><p>Plucked and bowed models, bodies, 12-voice allocator, MIDI, presets. Five native test suites and full-firmware simulator scenarios pass.</p></div>
+        <div class="step"><b>DONE — FIRMWARE</b><p>Builds with the pinned fm1-base and JieLi toolchain, passes its checks, released with a build attestation.</p></div>
+        <div class="step"><b>NEXT — HARDWARE</b><p>Measure CPU and xruns at 1 to 12 voices with the built-in benchmark, set the polyphony from that, then tune every instrument by ear.</p></div>
       </div>
     </section>
-    <footer><span>fm1-violioliolol · M-VAVE FM-1</span><span>Plucked-string prototype implemented · FM-1 timing not yet verified</span><span><a href="https://github.com/profikid/fm1-violioliolol">Source on GitHub ↗</a></span></footer>
+    <footer><span>fm1-violioliolol · M-VAVE FM-1</span><span>v0.1 · FM-1 timing not yet measured</span><span><a href="https://github.com/profikid/fm1-violioliolol">Source on GitHub ↗</a></span></footer>
   </div>
-  <script>
-    const wave=document.getElementById('wave');
-    for(let i=0;i<72;i++){const bar=document.createElement('i');const h=16+Math.abs(Math.sin(i*.31)*Math.cos(i*.09))*82;bar.style.height=h+'px';wave.appendChild(bar)}
-  </script>
 </body>
 </html>
