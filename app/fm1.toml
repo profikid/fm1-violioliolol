@@ -1,0 +1,19 @@
+# fm1-base build settings for fm1-violioliolol.
+name = "fm1-violioliolol"
+id_prefix = "FM-1_87"          # Development identity; verify uniqueness before any public release.
+usb_manufacturer = "fm1-violioliolol"
+usb_product = "fm1-violioliolol FM-1"
+ble = false
+usb_audio_in = false
+usb_audio_out = false
+include = ["dsp"]
+o2 = ["dsp/*.c"]               # DSP is built separately at -O2.
+pool_spare = 8192
+# Firmware metadata is intentionally not release-ready yet.
+tagline = "Real-time physical modelling strings for the M-VAVE FM-1"
+repo = "https://github.com/profikid/fm1-violioliolol"
+licence = "MIT"
+credits = "Built on fm1-base and felucca-bsp."
+author = "Laurens Profittlich"
+description = "An experimental real-time physical-modelling string instrument. Plucked-string DSP prototype; bowed-string engine and instrument UI are not implemented yet."
+tags = ["synth"]
