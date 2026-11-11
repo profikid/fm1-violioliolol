@@ -8,6 +8,11 @@
 #include "app.h"
 #include "../dsp/string_model.h"
 
+/* fm1-base host builds use the app unity unit; device builds compile this DSP at -O2 via fm1.toml. */
+#ifdef PLAT_HOST
+#include "../dsp/string_model.c"
+#endif
+
 #define BENCH_MAX_VOICES 8u
 #define BENCH_MAX_BLOCK 256u
 
