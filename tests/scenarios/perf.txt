@@ -1,0 +1,66 @@
+# The performance page: polyphony, bend range, key curve and the benchmark voices (VOX-001, VOX-002, RT-001).
+wait 900
+tap GLO
+wait 30
+expect page 2
+listen
+spin K4 1
+wait 100
+expect bench 1
+expect voices 1
+said BENCH 1
+spin K4 4
+wait 200
+expect bench 12
+expect voices 12
+shot bench.png
+wait 3000
+expect voices 12
+expect faults 0
+peakreset
+wait 500
+expect peak_db_max <0
+# a new instrument keeps the benchmark going
+spin ALGO 1
+wait 300
+expect engine 1
+expect voices 12
+# HOME stops everything
+tap HOME
+wait 300
+expect bench 0
+expect page 0
+wait 2000
+expect voices 0
+# polyphony limits what plays
+tap GLO
+wait 30
+spin K1 -6
+wait 30
+expect polyphony 2
+key 0 down
+key 4 down
+key 7 down
+wait 200
+expect voices 2
+key 0 up
+key 4 up
+key 7 up
+# bend range
+spin K2 10
+wait 30
+expect bend_range 12
+midi E0 7F 7F
+wait 30
+midi E0 00 40
+# key curve
+spin K3 -3
+wait 30
+expect curve -3
+# PLAY latches the pedal
+tap PLAY
+wait 30
+expect sustain 1
+tap PLAY
+wait 30
+expect sustain 0

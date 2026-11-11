@@ -1,19 +1,23 @@
 # fm1-base build settings for fm1-violioliolol.
 name = "fm1-violioliolol"
-id_prefix = "FM-1_87"          # Development identity; verify uniqueness before any public release.
+id_prefix = "FM-1_87"          # package identity: dev FM-1_8700, releases FM-1_87XXYYZZ (beside CHOPPAH's 86; no clash found)
 usb_manufacturer = "fm1-violioliolol"
 usb_product = "fm1-violioliolol FM-1"
 ble = false
 usb_audio_in = false
 usb_audio_out = false
-include = ["dsp"]
-o2 = ["dsp/*.c"]               # DSP is built separately at -O2.
+words = "words.tsv"
+include = ["dsp"]              # app/dsp links to ../dsp: the engine, platform-free and host-tested
+o2 = ["dsp/*.c"]               # the engine, at -O2
 pool_spare = 8192
-# Firmware metadata is intentionally not release-ready yet.
+# firmware.json (for the firmware hubs: the Firmware Hub, RemoteFM1, M-Flasher)
 tagline = "Real-time physical modelling strings for the M-VAVE FM-1"
 repo = "https://github.com/profikid/fm1-violioliolol"
 licence = "MIT"
 credits = "Built on fm1-base and felucca-bsp."
 author = "Laurens Profittlich"
-description = "An experimental real-time physical-modelling string instrument. Plucked-string DSP prototype; bowed-string engine and instrument UI are not implemented yet."
-tags = ["synth"]
+description = "fm1-violioliolol turns the M-VAVE FM-1 into a physical-modelling string instrument: no samples, every note is a computed vibrating string. Nineteen instruments in four families: basses, guitars, bowed strings and folk strings (harp, mandolin, banjo, koto, zither). Plucked strings are Karplus-Strong waveguides with stiffness, pluck and pickup position and a modal body; bowed strings are a nonlinear stick-slip waveguide with bow pressure, speed, position and vibrato. Up to twelve voices, key velocity and pressure, MIDI control and sixteen user presets. Experimental."
+tags = ["synth", "experimental"]
+install = "https://github.com/profikid/fm1-violioliolol/releases/latest"
+site = "https://profikid.github.io/fm1-violioliolol/"
+screenshot = "docs/img/card.png"

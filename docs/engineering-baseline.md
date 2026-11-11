@@ -18,25 +18,34 @@ explicitly in `app/app.h`. At 44.1 kHz this is a 5.805 ms audio block.
 The public `fm1_open` SDK header separately declares 128 frames, but that is
 not the platform contract used by this project. Do not mix those constants.
 
-## First DSP prototype
+## The engine
 
-`dsp/string_model.c` is a platform-free Karplus–Strong-style plucked-string
-voice:
-- single-precision state and arithmetic;
-- fixed 2048-sample circular delay line;
-- fractional read position using linear interpolation;
-- two-point averaging loss filter;
-- deterministic noise-burst excitation;
-- no heap allocation, locks, I/O, or platform calls in render.
+Everything that makes sound is in `dsp/`, platform-free C99 in single
+precision, and built at -O2 apart from the platform (`o2` in `app/fm1.toml`;
+`app/dsp` links to it):
 
-The 2048-sample capacity bounds the lowest supported fundamental to about
-21.6 Hz at 44.1 kHz. The current prototype is deliberately mono and one-pole;
-it is not yet a complete instrument model (no dispersion, body modes,
-pickup model, pluck-position comb, or bowed-string solver).
+| File | |
+|---|---|
+| `pm_math.h` | sin, exp2, sqrt, atan in float: no libm, no doubles |
+| `string_model.c` | plucked or struck string (PRD 6.1) |
+| `bowed_model.c` | nonlinear bowed string (PRD 6.2) |
+| `body_model.c` | modal body, and the output stage: tone, drive, level, limiter |
+| `instrument.c` | the 19 factory patches, 13 bodies, preset bank ([presets.md](presets.md)) |
+| `engine.c` | 12 voices, the allocator, MIDI, the control-to-audio queue |
+
+`tests/engine/run.sh` fails the build if anything in `dsp/` includes more
+than `<stdint.h>` or writes a floating literal without its `f`. The firmware
+build checks again that no soft-double routine was linked.
+
+`app/app.c` is the FM-1 side: the panel, the screen, the store. The audio
+interrupt (`app_render`) reads MIDI and owns the engine; the main loop
+(`app_frame`) only posts messages to it and is the one place flash is written.
 
 ## Measurement discipline
 
-Run `tests/engine/run.sh` for native correctness and throughput checks.
+Run `sh build.sh test` for native correctness and throughput checks, and
+`sh build.sh --host && sh tests/scenarios/run.sh` for the whole firmware in
+fm1-base's simulator.
 The host benchmark is only a repeatable regression signal. On-device
 measurements must be made in the actual FM-1 render path using the platform's
 audio timing diagnostics. Record voice count, block size, peak ticks,
