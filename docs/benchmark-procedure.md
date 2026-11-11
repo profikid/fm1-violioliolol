@@ -10,9 +10,13 @@ This is a first-pass measurement app, not the final instrument UI.
 - The screen reports the platform's render CPU percentage, CPU clock reading
   and cumulative audio xrun count.
 
-Each selection retriggers the active string voices. The strings naturally decay,
-but the renderer continues to process the selected voice count, so the load
-remains active after the initial transient.
+All eight voices are initialized once at boot, before the audio callback starts.
+K1 only publishes the selected voice count; the UI task never edits a live
+delay line. Newly enabled voices begin from their preloaded pluck excitation.
+When you reduce and later increase the count, those voices resume from where
+they were paused. Reboot between measurement passes when you need a fresh,
+repeatable excitation. The renderer continues to process the selected voice
+count even after the strings naturally decay.
 
 ## Measurement run
 
