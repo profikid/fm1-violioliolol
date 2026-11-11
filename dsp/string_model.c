@@ -43,6 +43,7 @@ int pm_string_note_on(pm_string_voice_t *voice, float frequency_hz,
                       float decay, float velocity)
 {
     uint32_t i;
+    uint32_t excitation_start;
     if (!voice || !(frequency_hz >= 21.6f) || !(frequency_hz <= 22050.0f))
         return -1;
     if (decay < PM_MIN_FEEDBACK)
@@ -62,8 +63,13 @@ int pm_string_note_on(pm_string_voice_t *voice, float frequency_hz,
     voice->damping_state = 0.0f;
     voice->write_index = 0u;
 
-    /* A deterministic noise burst is the initial pluck excitation. */
+    /* Excite only the active delay span. The unused tail must start silent,
+     * otherwise the first several periods contain unrelated stale noise. */
     for (i = 0; i < PM_STRING_DELAY_CAPACITY; ++i)
+        voice->delay[i] = 0.0f;
+    excitation_start = PM_STRING_DELAY_CAPACITY -
+                       ((uint32_t)voice->delay_samples + 1u);
+    for (i = excitation_start; i < PM_STRING_DELAY_CAPACITY; ++i)
         voice->delay[i] = pm_noise(&voice->rng) * velocity;
 
     voice->active = (uint8_t)(velocity > 0.0f);
