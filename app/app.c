@@ -80,7 +80,6 @@ static void draw_status(void)
 
 static void bench_set_voices(uint8_t count)
 {
-    uint32_t i;
     if (count != 1u && count != 2u && count != 4u && count != 8u)
         return;
     active_voices = count; /* publish one byte; never edit a live delay line from the UI task */
