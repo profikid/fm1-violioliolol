@@ -60,9 +60,13 @@ static void draw_status(void)
     uint_text(plat_cpu_pct(), number);
     append_text(cpu, number);
     append_text(cpu, "%  ");
+#ifdef PLAT_HOST
+    append_text(cpu, "HOST");
+#else
     uint_text(plat_cpu_khz(), number);
     append_text(cpu, number);
     append_text(cpu, " kHz");
+#endif
     uint_text(plat_xruns(), number);
     append_text(xruns, number);
 
