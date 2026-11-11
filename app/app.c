@@ -26,6 +26,54 @@ static const float bench_frequency[BENCH_MAX_VOICES] = {
     196.0f, 220.0f, 293.665f, 392.0f
 };
 
+static void append_text(char *destination, const char *source)
+{
+    while (*destination)
+        ++destination;
+    while (*source)
+        *destination++ = *source++;
+    *destination = 0;
+}
+
+static void uint_text(uint32_t value, char *destination)
+{
+    char digits[10];
+    uint32_t count = 0u;
+    do {
+        digits[count++] = (char)('0' + value % 10u);
+        value /= 10u;
+    } while (value && count < 10u);
+    while (count)
+        *destination++ = digits[--count];
+    *destination = 0;
+}
+
+static void draw_status(void)
+{
+    char voices[24] = "VOICES ";
+    char cpu[32] = "CPU ";
+    char xruns[24] = "XRUNS ";
+    char number[12];
+
+    uint_text(active_voices, number);
+    append_text(voices, number);
+    uint_text(plat_cpu_pct(), number);
+    append_text(cpu, number);
+    append_text(cpu, "%  ");
+    uint_text(plat_cpu_khz(), number);
+    append_text(cpu, number);
+    append_text(cpu, " kHz");
+    uint_text(plat_xruns(), number);
+    append_text(xruns, number);
+
+    cv_begin(240, 80, C_BLACK);
+    cv_text(8, 4, &FONT_B, APP_NAME, C_WHITE);
+    cv_text(8, 26, &FONT_S, voices, C_HI);
+    cv_text(8, 46, &FONT_XS, cpu, C_GRAY);
+    cv_text(8, 62, &FONT_XS, xruns, C_GRAY);
+    cv_blit(0, 0);
+}
+
 static void bench_set_voices(uint8_t count)
 {
     uint32_t i;
@@ -83,10 +131,13 @@ void app_ui_init(void)
 {
     plat_glow(1);
     plat_leds(0u, 1u);
+    draw_status();
 }
 
 void app_frame(void)
 {
+    static uint32_t last_stats_ms;
+    const uint32_t now = plat_ms();
     const int32_t detents = plat_enc(EN_K1);
     if (detents) {
         int32_t index = active_voices == 1u ? 0 :
@@ -94,6 +145,11 @@ void app_frame(void)
                         active_voices == 4u ? 2 : 3;
         index = clamp(index + detents, 0, 3);
         bench_set_voices((uint8_t)(1u << index));
+        draw_status();
+    }
+    if ((uint32_t)(now - last_stats_ms) >= 250u) {
+        last_stats_ms = now;
+        draw_status();
     }
 }
 
