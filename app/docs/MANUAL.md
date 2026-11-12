@@ -1,13 +1,46 @@
-# fm1-violioliolol — manual
+# fm1-violioliolol
 
-fm1-violioliolol turns the M-VAVE FM-1 into a string instrument with no samples
-in it: every note is a vibrating string, computed as it plays. There are
-nineteen instruments in four families, two pages of four parameters each, and
-sixteen slots for your own.
+fm1-violioliolol turns the M-VAVE FM-1 into a string instrument with no samples in it: every note is a vibrating
+string, computed as it plays. There are nineteen instruments in four families (basses, guitars, bowed strings and
+folk strings), two pages of four parameters each, and sixteen slots for your own.
 
-![The violin](img/screen-violin.png)
+**Experimental.** It is built and tested in fm1-base's simulator, but its CPU load on a real FM-1 has not been
+measured yet, so the default of eight voices is a first guess. If you hear crackles, lower POLYPHONY (section 6).
 
-## The screen
+---
+
+## Contents
+
+1. Install
+2. The screen
+3. Controls
+4. Instruments
+5. Saving
+6. The PERF page
+7. MIDI
+8. Troubleshooting
+
+---
+
+## 1. Install
+
+**Try it first:** the emulator on the site runs the same code in the browser, with sound, played with the mouse or
+the computer's keyboard.
+
+**Install:** open the install page in Chrome or Edge, connect the FM-1 by USB and press Install. Do not unplug the
+FM-1 while it writes. If it runs M-VAVE's FM1 Open firmware, put M-VAVE's original firmware back first (M-VAVE's
+workbench, *Restore original*), then install fm1-violioliolol.
+
+**From a terminal:** download the `.fwsc` and run `python3 tools/fm1_install.py fm1-violioliolol-VERSION.fwsc` from
+fm1-base's repository.
+
+**Going back:** the installer can put M-VAVE's own firmware back. fm1-violioliolol itself never touches the FM-1's
+bootloader; the installer offers m-bootloader, an open recovery bootloader, as a separate box you can tick.
+
+## 2. The screen
+
+![The violin: its family and name at the top, bow pressure, bow speed, vibrato and body on K1 to K4, one voice sounding](img/screen-violin.png "MAIN: the violin")
+
 
 - **Top:** the family (or USER and its slot), EDITED once you change
   something, the page (MAIN, MORE, PERF), and the instrument's name.
@@ -17,7 +50,7 @@ sixteen slots for your own.
   and lights for SUSTAIN, MIDI in, LIMIT (the output limiter working) and SHED
   (voices dropped because the render ran out of time).
 
-## Controls
+## 3. Controls
 
 | Control | What it does |
 |---|---|
@@ -33,7 +66,9 @@ sixteen slots for your own.
 | SAVE | Save the instrument to a slot (below); on PERF, save the settings |
 | HOME | All notes off, benchmark off, back to MAIN |
 
-## Instruments
+![MORE: the violin's second page](img/screen-more.png "MORE: bow position, vibrato rate, attack, release")
+
+## 4. Instruments
 
 | Family | Instruments | K1 to K4 on MAIN |
 |---|---|---|
@@ -42,6 +77,8 @@ sixteen slots for your own.
 | GUITAR | CLEAN ELEC, DRIVE ELEC, JAZZ | Pickup position, intensity, damping, drive |
 | BOWED | VIOLIN, VIOLA, CELLO, CONTRABASS | Bow pressure, bow speed, vibrato, body |
 | FOLK | HARP, MANDOLIN, BANJO, KOTO, ZITHER | Pluck position, intensity, damping, body |
+
+![The nylon guitar](img/screen-nylon.png "MAIN: the nylon guitar") ![The finger bass](img/screen-bass.png "MAIN: the finger bass")
 
 MORE holds the rest: decay, stiffness, tone, release, buzz, bow position,
 vibrato rate, attack. Mandolin plays a course of two strings a note, slightly
@@ -67,7 +104,7 @@ The parameters:
 | VIBRATO / VIB RATE | Pitch vibrato | Same, coming in after the attack |
 | ATTACK | — | The bow reaching its speed |
 
-## Saving
+## 5. Saving
 
 1. Change what you like (SAVE lights up).
 2. Press **SAVE**. The top line shows the slot it will go to: the slot the
@@ -80,19 +117,21 @@ instruments are in the USER family. On the PERF page, SAVE keeps the
 polyphony, key curve, octave and the instrument you are on, so the FM-1 starts
 there next time.
 
-## The PERF page
+## 6. The PERF page
+
+![The PERF page with the benchmark at four voices](img/screen-perf.png "PERF: polyphony, bend range, key curve, benchmark")
 
 | Row | |
 |---|---|
 | POLYPHONY | 1 to 12 voices (default 8) |
 | BEND RANGE | Pitch bend, 1 to 24 semitones each way (saved with the instrument) |
 | KEY CURVE | The keys' velocity curve, −5 (soft) to +5 (hard) |
-| BENCH | OFF, 1, 2, 4, 8 or 12 voices held and kept running, for measuring the CPU ([benchmark-procedure.md](benchmark-procedure.md)) |
+| BENCH | OFF, 1, 2, 4, 8 or 12 voices held and kept running, for measuring the CPU ([benchmark procedure](https://github.com/profikid/fm1-violioliolol/blob/main/docs/benchmark-procedure.md)) |
 
 If the render ever takes more than 90 % of its time, one voice fades and the
 polyphony drops by one (never below two); SHED counts how often.
 
-## MIDI
+## 7. MIDI
 
 All channels are heard. The FM-1's own keys go out over USB on channel 1
 (notes with velocity, and channel pressure).
@@ -108,3 +147,16 @@ All channels are heard. The FM-1's own keys go out over USB on channel 1
 | CC120, CC123, CC121 | All sound off, all notes off, reset controllers |
 | Channel / poly pressure | The instrument's pressure destination |
 | Program change N | The Nth instrument: 0–18 factory, 19–34 USER slots |
+
+## 8. Troubleshooting
+
+| What happens | What to do |
+|---|---|
+| Crackles or dropouts with many notes | Lower POLYPHONY on the PERF page. XRUNS on the status line counts dropouts; SHED lights when the firmware has already dropped a voice to keep up |
+| A note is quieter than the others, or LIMIT lights | The limiter is holding a loud chord inside full scale. Turn the instrument's LEVEL, or CC7, down a little |
+| A bowed note squeaks or whistles | Bow pressure too low for the speed: raise BOW PRESS, or lower BOW SPEED |
+| A bowed note grinds | Too much pressure: lower BOW PRESS, or move BOW POS away from the bridge |
+| Nothing from MIDI | Every channel is heard. Check the MIDI light on the status line; if it does not flash, the messages are not arriving |
+| SAVE says FAILED | The flash write did not complete. Try again; the previous copy of your presets is kept |
+| The USER family is missing | It appears once something is saved (section 5) |
+| Something sounds wrong | Please open an issue with the instrument, what you played and, if you can, the benchmark numbers |

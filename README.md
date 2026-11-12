@@ -19,7 +19,7 @@ note is a vibrating string, computed in real time.
   CC16–23 and program change.
 - **16 user presets** that store model parameters, never audio.
 
-Read the [manual](docs/manual.md) for the controls.
+Read the [manual](app/docs/MANUAL.md) for the controls, or [try it in the browser](https://profikid.github.io/fm1-violioliolol/emu/).
 
 ## Status
 
@@ -32,8 +32,9 @@ is the most useful thing you can do with it.
 
 ## Install
 
-Download the `.fwsc` from the [latest release](https://github.com/profikid/fm1-violioliolol/releases/latest)
-and install it with the official M-VAVE updater or the Firmware Hub. The
+Open the [web installer](https://profikid.github.io/fm1-violioliolol/install/) in Chrome or Edge with the FM-1
+connected by USB, or download the `.fwsc` from the [latest release](https://github.com/profikid/fm1-violioliolol/releases/latest)
+and use the Firmware Hub or `python3 tools/fm1_install.py` from fm1-base. The
 packages are built from source on GitHub by the shared FM-1 builder and
 carry a build attestation:
 
@@ -41,8 +42,9 @@ carry a build attestation:
 gh attestation verify fm1-violioliolol-0.1.fwsc --repo profikid/fm1-violioliolol
 ```
 
-This firmware does not touch the bootloader or the recovery path; the stock
-firmware can be reinstalled the usual way.
+This firmware does not touch the bootloader or the recovery path, and the stock
+firmware can be reinstalled the usual way. The web installer also offers
+m-bootloader, an open recovery bootloader, as a separate opt-in box.
 
 ## Build and test
 
@@ -66,6 +68,8 @@ felucca-bsp, pinned as `base/` (fm1-base `f66ac4a`, felucca-bsp `d18879b`);
 
 ## Project site
 
-[profikid.github.io/fm1-violioliolol](https://profikid.github.io/fm1-violioliolol/), published from `site/`.
+[profikid.github.io/fm1-violioliolol](https://profikid.github.io/fm1-violioliolol/): the front page, the web
+installer, the firmware in the browser, the manual and the download. Each release builds it from its own attested
+package with fm1-base's `tools/make_site.py`, styled by `tools/site_style.py` from `app/site/`.
 
 MIT licence.

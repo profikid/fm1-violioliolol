@@ -1,0 +1,92 @@
+/* SPDX-License-Identifier: MIT (adapted from CHOPPAH's, same author)
+ * fm1-violioliolol's emulator page (tools/site_style.py: after site.css, in place of fm1-base's emulator style). The markup
+   and script are fm1-base's (web/emu/index.html): the panel is its SVG drawing of the FM-1 (its own colours), and
+   every class the script sets (.hit, .lit, .held, .latched, .dim, [hidden]) keeps its job; this dresses the page
+   around it and lights the panel in violioliolol's gold. */
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+body.emu main { max-width: 1160px; margin: 0 auto; }
+body.emu .intro { display: flex; flex-wrap: wrap; align-items: end; gap: 6px 24px; margin: 0 0 18px; }
+body.emu .intro h1 { margin: 0; font-size: clamp(30px, 4.6vw, 44px); }
+body.emu .intro p { margin: 0 0 6px; color: var(--dim); max-width: 60ch; }
+
+/* the FM-1, on a dark stage; at phone width it keeps its size (24 px controls) and scrolls in its own box */
+.devicebox {
+  overflow-x: auto; overscroll-behavior-x: contain; background: radial-gradient(ellipse at 50% 30%, #201e29, #0c0b11 70%);
+  border: 1px solid var(--line); border-radius: 14px; padding: clamp(10px, 2.4vw, 28px);
+}
+.device { position: relative; width: 100%; min-width: 560px; aspect-ratio: 1000 / 640; user-select: none; -webkit-user-select: none;
+          -webkit-touch-callout: none; touch-action: manipulation; filter: drop-shadow(0 24px 30px rgba(0, 0, 0, .55)); }
+.device svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.hit { position: absolute; touch-action: none; cursor: pointer; -webkit-tap-highlight-color: transparent; border-radius: 12px; }
+.hit.knob { cursor: ns-resize; border-radius: 50%; }
+.hit:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; box-shadow: 0 0 0 6px #1b1d20; }
+.device canvas { position: absolute; left: 31.8%; top: 9.6875%; width: 20%; height: 31.25%; background: #000; border-radius: 2px;
+                 image-rendering: pixelated; }
+.ctl { cursor: pointer; }
+.ctl.knob { cursor: ns-resize; }
+.btnface, .keyface { transition: fill .06s; }
+.lit .btnface { fill: #f0c878; }
+.lit text.btn { fill: #1a1408; }
+.held .btnface, .held .keyface { stroke: #f0c878; stroke-width: 3; }
+.latched .btnface, .latched .keyface { stroke: #7fb6ff; stroke-width: 3; }
+.lit .keyface.white { fill: #f6d89a; }
+.lit .keyface.black { fill: #7fb6ff; }
+.dim .btnface { fill: #6b5a30; }                /* the dim lights: half bright */
+.dim .keyface.white { fill: #e9dcc0; }
+.dim .keyface.black { fill: #7fb8a2; }
+.start { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(8, 7, 5, .6); border-radius: 4.4% / 6.9%; }
+.start[hidden] { display: none; }
+.start button {
+  font: 600 15px/1 var(--f-mono); letter-spacing: .14em; text-transform: uppercase; padding: 18px 30px; cursor: pointer;
+  border: 0; border-radius: 7px; background: var(--amber); color: #1a1408; box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .3), 0 10px 30px rgba(0, 0, 0, .5);
+}
+.start button:hover:not(:disabled) { filter: brightness(1.08); }
+.start button:disabled { opacity: .6; cursor: progress; }
+.turn { display: none; margin: 0 0 12px; color: var(--dim); font-size: 14px; }
+@media (orientation: portrait) and (max-width: 700px) { .turn { display: block; } }
+
+/* the bar under the panel: state, mute, shortcuts, CPU, reset */
+.bar {
+  display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 14px 0 0; padding: 10px 14px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px; color: var(--dim); font-size: 14px;
+}
+#status { font: 500 13.5px var(--f-mono); color: var(--hot); }
+#alert { color: #df765f; font-weight: 600; flex-basis: 100%; }
+#alert:empty { display: none; }
+.bar .cpu { font: 12.5px var(--f-mono); font-variant-numeric: tabular-nums; color: var(--faint); margin-left: auto; }
+.bar .keys { display: inline-flex; gap: 7px; align-items: center; }
+.bar .keys input { width: 16px; height: 16px; accent-color: var(--amber); }
+.bar button, .speak button {
+  font: 600 12px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; cursor: pointer; min-height: 34px;
+  color: var(--hot); background: #2c2836; border: 0; border-radius: 6px; padding: 0 13px; box-shadow: inset 0 -2px 0 #14131b;
+}
+.bar button:hover, .speak button:hover:not(:disabled) { background: #3f3a4b; }
+.bar button[aria-pressed="true"] { background: var(--amber); color: #1a1408; }
+.speak button:disabled { opacity: .45; cursor: default; }
+
+/* where to start (fm1-violioliolol's) */
+body.emu .start-here { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 22px 0 0; }
+body.emu .start-here div { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+body.emu .start-here b { display: block; font: 600 16px var(--f-display); color: var(--fg); margin-bottom: 4px; }
+body.emu .start-here p { margin: 0; color: var(--dim); font-size: 14.5px; }
+body.emu .start-here .k { font: 600 11px var(--f-mono); letter-spacing: .06em; color: #1a1408; background: var(--amber); padding: 2px 6px; border-radius: 4px; }
+
+/* the screen reader */
+.speak { margin: 16px 0 0; padding: 4px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+.speak summary { cursor: pointer; padding: 10px 0; }
+.speak summary h2 { display: inline; font: 600 16px var(--f-display); margin: 0; padding: 0; border: 0; }
+.speak[open] summary { margin: 0 0 8px; }
+.speak fieldset { border: 0; margin: 0 0 10px; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 22px; }
+.speak legend { font: 500 11px var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); padding: 0; margin: 0 0 6px; }
+.speak label { display: inline-flex; gap: 8px; align-items: center; }
+.speak input { width: 17px; height: 17px; accent-color: var(--amber); }
+.speak .row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin: 10px 0 14px; }
+#said { font: 500 19px var(--f-mono); color: var(--amber); margin: 4px 0 0; min-height: 1.6em; overflow-wrap: anywhere; }
+#said:empty::before { content: "Nothing yet."; color: var(--faint); font: 15px var(--f-body); }
+.speak p.note { color: var(--dim); margin: 6px 0 0; font-size: 14px; }
+.help { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 16px 32px; margin: 26px 0 0; }
+.help h2 { font: 600 17px var(--f-display); margin: 0 0 6px; padding: 0; border: 0; }
+.help p, .help ul { margin: 0; max-width: 60ch; }
+.help ul { padding-left: 1.1rem; }
+kbd { font: 600 .85em var(--f-mono); background: var(--raise); border: 1px solid var(--line); border-radius: 4px; padding: 0 .35em; color: var(--hot); }
+@media (prefers-reduced-motion: reduce) { .btnface, .keyface { transition: none; } }

@@ -202,7 +202,7 @@ The final UI should be instrument-oriented, with four context-sensitive performa
 | ID | Requirement | Acceptance intent | Status | Evidence / notes |
 |---|---|---|---|---|
 | UI-001 | Instrument selection | Select instrument family and model | `[implemented]` | ALGORITHM picks the family, PRESET the instrument in it, SELECT walks all of them (`tests/scenarios/play.txt`) |
-| UI-002 | Four context-sensitive controls | Four primary parameters are visible and immediately editable | `[implemented]` | K1 to K4 on two pages per instrument (EDIT switches), and CC16 to CC23 over MIDI ([manual](manual.md)) |
+| UI-002 | Four context-sensitive controls | Four primary parameters are visible and immediately editable | `[implemented]` | K1 to K4 on two pages per instrument (EDIT switches), and CC16 to CC23 over MIDI ([manual](../app/docs/MANUAL.md)) |
 | UI-003 | Parameter feedback | Display names and values clearly on the 240 × 240 display | `[implemented]` | Name, value and bar per row; changes shown and sent to a screen reader; screenshots in `docs/img` |
 | UI-004 | Preset browser | Browse and load parameter presets | `[implemented]` | A user family on ALGORITHM; SAVE picks a slot; program change selects any instrument (`tests/scenarios/edit_save.txt`) |
 | UI-005 | Performance status | Provide useful voice/activity and audio status without clutter | `[implemented]` | Voice boxes, CPU, xruns, octave, and sustain, MIDI, limiter and shed indicators |

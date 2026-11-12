@@ -8,12 +8,12 @@ wait 1300
 shot screen-violin.png
 key 7 up
 tap EDIT
-wait 30
+wait 1500
 shot screen-more.png
 tap GLO
 wait 30
 spin K4 3
-wait 400
+wait 1500
 shot screen-perf.png
 tap HOME
 wait 1500
