@@ -1,0 +1,80 @@
+# SPDX-License-Identifier: MIT
+# Every push to main is a release: this works out the next version (tools/next_version.py), tags the pushed commit
+# and starts the release (.github/workflows/release.yml) on that tag.
+#
+#   patch  the default: v0.1 -> v0.1.1 -> v0.1.2
+#   minor  "[minor]" in a commit message or the PR title: v0.1.2 -> v0.2
+#   major  "[major]": v0.2 -> v1.0
+#   none   "[skip release]"
+#
+# Or run this workflow by hand (Actions -> Next version -> Run workflow) and pick the part to raise.
+#
+# A tag pushed with the workflow's own token starts no workflow by itself (GitHub's rule against loops), so the
+# release is started explicitly, on the tag: it then builds, attests and publishes exactly as for a tag pushed by
+# hand, which also still works.
+name: Next version
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Which part of the version to raise
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+
+permissions:
+  contents: read
+
+concurrency:
+  group: violioliolol-version             # one at a time, in push order: two pushes never get the same number
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write                     # push the tag
+      actions: write                      # start the release on it
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0                  # every tag, and the messages of the pushed commits
+
+      - name: The next version
+        id: next
+        env:
+          BEFORE: ${{ github.event.before }}
+          BUMP: ${{ inputs.bump }}
+        run: |
+          set -euo pipefail
+          # what was pushed: from the previous head of main, or (a first push, a manual run) the head alone
+          if [[ -n "${BEFORE:-}" && ! "$BEFORE" =~ ^0+$ ]] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            git log --format=%B "$BEFORE..$GITHUB_SHA" > "$RUNNER_TEMP/messages"
+          else
+            git log -1 --format=%B "$GITHUB_SHA" > "$RUNNER_TEMP/messages"
+          fi
+          args=(--messages "$RUNNER_TEMP/messages" --head "$GITHUB_SHA")
+          if [[ -n "${BUMP:-}" ]]; then args+=(--bump "$BUMP"); fi
+          version=$(python3 tools/next_version.py "${args[@]}")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "next version: $version"
+
+      - name: Tag it and start the release
+        if: steps.next.outputs.version != 'skip'
+        env:
+          VERSION: ${{ steps.next.outputs.version }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$VERSION" -m "fm1-violioliolol $VERSION" "$GITHUB_SHA"
+          git push origin "refs/tags/v$VERSION"
+          gh workflow run release.yml --ref "v$VERSION"
+          echo "### v$VERSION" >> "$GITHUB_STEP_SUMMARY"
+          echo "Tagged $GITHUB_SHA and started the release." >> "$GITHUB_STEP_SUMMARY"

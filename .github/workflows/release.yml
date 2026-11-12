@@ -3,18 +3,22 @@
 # with build provenance (an attestation), so the Firmware Hub shows it as "Built from source on GitHub" and anyone
 # can check that the .fwsc they install is the one this commit builds.
 #
-# A tag vX.Y is the release: the builder makes the package from that commit, attests it, the release is published with
-# the attested package, and the site (.github/workflows/pages.yml: front page, web installer, emulator, manual) is built
-# from that same package, so the site and the Hub serve the same bytes.
+# A version tag (vX.Y or vX.Y.Z) is the release: the builder makes the package from that commit, attests it, the
+# release is published with the attested package, and the site (.github/workflows/pages.yml: front page, web
+# installer, emulator, manual) is built from that same package, so the site and the Hub serve the same bytes.
 #
-# Merging to main does not release: .github/workflows/ci.yml builds and tests there. The release's notes are
-# docs/hub/notes_vXYY.md (v0.1 -> notes_v001.md), if there is one; without it the release keeps GitHub's changelog.
+# Every push to main gets its tag from .github/workflows/version.yml, which then starts this workflow on it (a run of
+# this workflow on a tag is that tag's release); a tag pushed by hand releases too. Run on a branch, this is a build
+# and an attestation without a release.
+#
+# The notes: docs/hub/notes_v<version>.md when there is one (notes_v0.2.1.md); else, for the first release of a
+# minor line, that line's docs/hub/notes_vXYY.md (v0.1 -> notes_v001.md); else GitHub's changelog since the last tag.
 name: Build, attest and release
 
 on:
   push:
     tags: ['v[0-9]*']
-  workflow_dispatch:                 # a build and an attestation of the selected ref, without a release
+  workflow_dispatch:                 # on a tag: its release (version.yml); on a branch: a build and an attestation only
 
 permissions:
   contents: read
@@ -139,16 +143,25 @@ jobs:
         run: |
           set -euo pipefail
           version=${GITHUB_REF_NAME#v}
-          # the notes, when they are written: docs/hub/notes_v096.md for v0.96
           dec() { v=$(printf '%s' "$1" | sed 's/^0*//'); if [ -n "$v" ]; then echo "$v"; else echo 0; fi; }
           major="${version%%.*}"; rest="${version#*.}"; minor="${rest%%.*}"; minor="${minor%%-*}"
-          notes="docs/hub/notes_v$(printf '%03d' $(( $(dec "$major") * 100 + $(dec "$minor") ))).md"
+          line="docs/hub/notes_v$(printf '%03d' $(( $(dec "$major") * 100 + $(dec "$minor") ))).md"
+          # has this minor line been released before? (published releases only, not this draft)
+          earlier=$(gh release list --limit 200 --json tagName,isDraft \
+            --jq "[.[] | select(.isDraft | not) | .tagName | select(test(\"^v$major\\\\.$minor(\\\\.|$)\"))] | length")
           args=(--draft=false)
-          if [[ -f "$notes" ]]; then
+          if [[ -f "docs/hub/notes_v$version.md" ]]; then
+            notes="docs/hub/notes_v$version.md"
+          elif [[ -f "$line" && "$earlier" == 0 ]]; then
+            notes="$line"
+          else
+            notes=""
+          fi
+          if [[ -n "$notes" ]]; then
             echo "notes: $notes"
             args+=(--notes-file "$notes")
           else
-            echo "no $notes: the release keeps GitHub's changelog"
+            echo "notes: GitHub's changelog since the last release"
           fi
           # a release with a suffix in its version is a prerelease and cannot be the latest one
           if [[ "$version" != *-* ]]; then args+=(--latest); fi
