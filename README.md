@@ -61,9 +61,8 @@ The engine is in `dsp/` (platform-free C, see
 ## Firmware base
 
 Built on [fm1-base](https://github.com/charlesvestal/fm1-base) and
-felucca-bsp, pinned as `base/` at the revision
-[CHOPPAH](https://github.com/profikid/fm1-break-choppah) uses; 256-frame
-blocks at 44.1 kHz.
+felucca-bsp, pinned as `base/` (fm1-base `f66ac4a`, felucca-bsp `d18879b`);
+256-frame blocks at 44.1 kHz, the CPU at its stock 360 MHz.
 
 ## Project site
 

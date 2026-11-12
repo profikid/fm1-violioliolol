@@ -239,7 +239,7 @@ These constraints apply to every DSP and application requirement.
 | RT-005 | Flash safety | Persistent flash operations only from permitted control context | `[implemented]` | `plat_store_save` only from `app_frame`, after the voices fade (60 ms at most); a failed write is reported (`tests/scenarios/edit_save.txt`) |
 | RT-006 | Bootloader preservation | Never overwrite or modify bootloader/recovery as part of normal app development | `[implemented-policy]` | Explicit project constraint |
 | RT-007 | Audio diagnostics | Capture CPU load, peak timing and xruns on hardware | `[implemented]` | Status line shows CPU and xruns live; `app_overload` sheds one voice at a time when the render passes 90 % of its block |
-| RT-008 | Memory accounting | Track per-voice and total app memory, including shared pool usage | `[implemented]` | Firmware build: image 118,852 B; RAM .data+.bss 18,900 of 98,304 B; pool 185,984 of 344,064 B; engine 151,160 B; voice slot 12,460 B |
+| RT-008 | Memory accounting | Track per-voice and total app memory, including shared pool usage | `[implemented]` | Firmware build: image 119,104 B; RAM .data+.bss 18,900 of 98,304 B; pool 185,984 of 344,064 B; engine 151,160 B; voice slot 12,460 B |
 | RT-009 | Second-core offload | Evaluate core 2 only if profiling shows a useful, safe partition | `[deferred]` | No device profile yet to justify a split. Revisit if VOX-006 fails on one core |
 | RT-010 | Output headroom | Prevent clipping when voices are mixed | `[implemented]` | 0.3 mix headroom, a bounded drive stage and a limiter at 0.85; four voices at moderate velocity never reach the limiter (`test_engine` polyphony) |
 
