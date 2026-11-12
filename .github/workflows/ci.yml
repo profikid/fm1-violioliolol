@@ -29,13 +29,13 @@ jobs:
           python -m pip install --upgrade pip pillow
 
       - name: Native DSP tests and throughput harness
-        run: sh build.sh test
+        run: ./build.sh test
 
       - name: Build the fm1-base host simulator
-        run: sh build.sh --host
+        run: ./build.sh --host
 
       - name: Firmware scenarios in the simulator
-        run: sh tests/scenarios/run.sh build/scenarios
+        run: tests/scenarios/run.sh build/scenarios
 
       - name: Keep the simulator's output
         if: always()

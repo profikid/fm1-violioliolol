@@ -52,7 +52,7 @@ Then update VOX-005..007 and MIDI-010 in the [PRD](PRD.md) and set
 
 | | Bytes |
 |---|---|
-| Firmware image | 118,852 |
+| Firmware image | 119,104 |
 | RAM .data + .bss | 18,900 of 98,304 |
 | Platform pool used | 185,984 of 344,064 |
 | Engine (12 voices, body, output, queue) | 151,160 |
