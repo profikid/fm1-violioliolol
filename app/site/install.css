@@ -1,0 +1,101 @@
+/* SPDX-License-Identifier: MIT (adapted from CHOPPAH's, same author)
+ * fm1-violioliolol's install page (tools/site_style.py: after site.css, in place of fm1-base's installer style). The page's
+   markup and script are fm1-base's (web/installer.html): every id, class and [hidden] it uses keeps working; this
+   only dresses them. A narrow column like a flash utility: the install card first, the rest as panels below. */
+body.install { padding-bottom: 40px; }
+body.install .page, body.install main, body.install footer { max-width: 680px; margin-inline: auto; }
+body.install header.site { margin-bottom: 28px; }
+body.install main { position: relative; padding: 0; }
+body.install h1 { font-size: clamp(32px, 6vw, 46px); margin: 0 0 18px; padding-right: 90px; }
+body.install h2 {
+  display: block; font-size: 20px; margin: 44px 0 10px; padding-top: 18px; border-top: 1px solid var(--line);
+}
+body.install p { max-width: none; }
+body.install a { color: var(--fg); }
+body.install .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+body.install .small { color: var(--dim); font-size: 14px; }
+body.install ol.small, body.install ul.small { font-size: 14px; }
+body.install ol { margin: 0 0 16px; padding-left: 22px; }
+body.install ol li { margin: 8px 0; }
+
+/* the language switch */
+body.install .lang {
+  position: absolute; right: 0; top: 10px; font: 600 12px/1 var(--f-mono); letter-spacing: .06em; color: var(--hot);
+  background: #2c2836; border: 0; border-radius: 5px; padding: 8px 10px; cursor: pointer; box-shadow: inset 0 -2px 0 #14131b;
+}
+body.install .lang:hover { background: #3f3a4b; }
+
+/* buttons: hardware caps; the main one amber */
+body.install button {
+  font: 600 14px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; cursor: pointer;
+  background: var(--amber); color: #1a1408; border: 0; border-radius: 6px; padding: 13px 22px;
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .3);
+}
+body.install button:hover:not(:disabled) { filter: brightness(1.08); }
+body.install button:active:not(:disabled) { transform: translateY(1px); box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .3); }
+body.install button:disabled { opacity: .4; cursor: default; }
+body.install button.plain { background: #2c2836; color: var(--hot); box-shadow: inset 0 -2px 0 #14131b; }
+body.install button.plain:hover:not(:disabled) { background: #3f3a4b; filter: none; }
+body.install #stockgo, body.install #reportgo, body.install #reportcopy {   /* the page's other jobs: quieter */
+  background: #2c2836; color: var(--hot); box-shadow: inset 0 -2px 0 #14131b;
+}
+body.install #stockgo:hover:not(:disabled), body.install #reportgo:hover, body.install #reportcopy:hover { background: #3f3a4b; filter: none; }
+body.install #go { width: 100%; padding: 18px 22px; font-size: 16px; letter-spacing: .14em; }
+
+/* the warning to back up, and the M-BOOT choice */
+body.install .backup {
+  border: 1px solid rgba(240, 200, 120, .55); background: var(--amber-soft); border-radius: 8px; padding: 12px 14px; margin: 0 0 16px;
+}
+body.install .backup strong { color: var(--amber); }
+body.install .opt { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 8px; }
+body.install .opt input { margin-top: 5px; width: 17px; height: 17px; accent-color: var(--amber); flex: none; }
+
+/* progress: the header meter's amber, in segments */
+body.install progress {
+  -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 14px; margin-top: 18px;
+  border: 1px solid var(--line); border-radius: 4px; background: var(--panel); overflow: hidden;
+}
+body.install progress::-webkit-progress-bar { background: var(--panel); }
+body.install progress::-webkit-progress-value {
+  background: repeating-linear-gradient(90deg, var(--amber) 0 10px, transparent 10px 12px);
+}
+body.install progress::-moz-progress-bar { background: repeating-linear-gradient(90deg, var(--amber) 0 10px, transparent 10px 12px); }
+body.install #status { margin-top: 12px; min-height: 1.6em; font: 500 14px var(--f-mono); color: var(--hot); }
+body.install #alert { color: #df765f; font-weight: 600; margin: 0; }
+body.install #alert:empty { display: none; }
+
+/* the log, the crash report */
+body.install pre { color: var(--dim); font-size: 12px; white-space: pre-wrap; margin-top: 16px; }
+body.install #log {
+  max-height: 15em; overflow-y: auto; overscroll-behavior: contain; padding: 10px 12px; border-radius: 8px;
+  border: 1px solid var(--line); background: #09080d;
+}
+body.install #log:empty { display: none; }
+body.install textarea {
+  width: 100%; box-sizing: border-box; font: 12px/1.45 var(--f-mono); color: var(--fg); background: #09080d;
+  border: 1px solid var(--line); border-radius: 8px; padding: 10px;
+}
+body.install input[type=file] { font: 13px var(--f-mono); color: var(--fg); max-width: 100%; margin-top: 6px; }
+body.install input[type=file]::file-selector-button {
+  font: 600 12px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; margin-right: 10px; cursor: pointer;
+  background: #2c2836; color: var(--hot); border: 0; border-radius: 5px; padding: 8px 12px;
+}
+
+/* the port picker */
+body.install #portpick { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 2px 16px 10px; margin-top: 20px; }
+body.install #portpick h2 { border: 0; margin-top: 14px; padding-top: 0; }
+body.install #portlist { list-style: none; padding: 0; }
+body.install #portlist li { display: flex; gap: 10px; align-items: center; margin: 0 0 8px; }
+
+/* the dialogs */
+body.install dialog {
+  max-width: 460px; border: 1px solid var(--line); border-radius: 12px; padding: 24px; background: var(--panel);
+  color: var(--fg); box-shadow: 0 18px 60px rgba(0, 0, 0, .6);
+}
+body.install dialog::backdrop { background: rgba(5, 4, 3, .7); }
+body.install dialog h2 { margin: 0 0 12px; padding: 0; border: 0; }
+body.install dialog .row { display: flex; gap: 12px; justify-content: flex-end; flex-wrap: wrap; margin: 24px 0 0; }
+
+body.install footer { padding: 28px 0 0; margin-top: 44px; border-top: 1px solid var(--line); }
+body.install footer .small { font-size: 12.5px; color: var(--faint); }
+body.install footer a { color: var(--dim); }

@@ -1,59 +1,141 @@
-name: Publish fm1-violioliolol site
+# SPDX-License-Identifier: MIT
+# fm1-violioliolol's site (after CHOPPAH's): the front page, the web installer, the browser emulator, the manual and the firmware download.
+#
+# The site is built from the release's own package, the one the shared builder attested, so the site and the Firmware
+# Hub serve the same bytes. The package is not built here: a package built here would not be the attested one.
+#
+# Called by .github/workflows/release.yml with the version of the release. Run by hand (workflow_dispatch) it rebuilds
+# the site of a release that is already published.
+name: Build and publish the site
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "site/**"
-      - "app/words.tsv"
-      - ".github/workflows/pages.yml"
+  workflow_call:
+    inputs:
+      version:
+        description: 'the version of the release the site is built for (X.Y)'
+        required: true
+        type: string
+      package-from:
+        description: 'where the package comes from: the attested artifact of this run, or the published release'
+        required: false
+        default: artifact
+        type: string
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'the version of the release the site is built for (X.Y)'
+        required: true
+        type: string
+      package-from:
+        description: 'where the package comes from: the attested artifact of this run, or the published release'
+        required: false
+        default: release
+        type: string
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
+# one release at a time, in order: a run is never cancelled halfway through the deploy
 concurrency:
-  group: github-pages
-  cancel-in-progress: true
+  group: pages
+  cancel-in-progress: false
+
+env:
+  EMSDK_VERSION: 3.1.74
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout with pinned fm1-base
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: The attested package
+        if: inputs.package-from == 'artifact'
+        uses: actions/download-artifact@v4
         with:
-          python-version: "3.12"
+          name: packages
+          path: build/attested
 
-      # the screen reader's words file (fm1-base tools/gen_words.py): the firmware links to
-      # https://profikid.github.io/fm1-violioliolol/words/<hash>.json, made from app/words.tsv by any build
-      - name: The screen reader's words
+      - name: The attested package (from the published release)
+        if: inputs.package-from != 'artifact'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq libfribidi0
-          python -m pip install --upgrade pip pillow
-          sh build.sh --host
-          mkdir -p site/words
-          cp app/web/words/*.json site/words/
+          set -euo pipefail
+          mkdir -p build/package
+          gh release download "v$VERSION" --pattern "fm1-violioliolol-$VERSION.fwsc" --dir build/package --clobber
 
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
+      - name: The package in one place
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p app/build
+          # the attested package of this release, not a build here
+          for src in build/attested/build/release-assets/fm1-violioliolol-"$VERSION".fwsc \
+                     build/package/fm1-violioliolol-"$VERSION".fwsc; do
+            if [ -f "$src" ]; then cp "$src" app/build/; echo "package: $src"; exit 0; fi
+          done
+          echo "no fm1-violioliolol-$VERSION.fwsc in the artifact or the release" >&2
+          exit 1
 
-      - name: Upload site
-        uses: actions/upload-pages-artifact@v3
+      - name: Pillow with raqm (the build's fonts)
+        run: |
+          raqm() { /usr/bin/python3 -c 'from PIL import features; raise SystemExit(not features.check("raqm"))' 2>/dev/null; }
+          raqm || /usr/bin/python3 -m pip install -q --user --break-system-packages Pillow
+          raqm || { sudo apt-get update -qq && sudo apt-get install -y -qq libfribidi0; }
+          raqm && /usr/bin/python3 -c 'import PIL; print("Pillow", PIL.__version__, "with raqm")'
+
+      # Emscripten for the browser emulator. setup-emsdk@v14's own cache uses GitHub's retired cache service (400)
+      # and its install spends ~20 s unpacking .tar.xz, so emsdk is installed by hand and kept with actions/cache.
+      - uses: actions/cache@v4
+        id: emsdk
+        with:
+          path: ~/emsdk
+          key: emsdk-${{ env.EMSDK_VERSION }}-${{ runner.os }}
+
+      - name: Emscripten ${{ env.EMSDK_VERSION }}
+        run: |
+          if [ "${{ steps.emsdk.outputs.cache-hit }}" != true ]; then
+            git clone -q --depth 1 https://github.com/emscripten-core/emsdk.git "$HOME/emsdk"
+            "$HOME/emsdk/emsdk" install "$EMSDK_VERSION"
+            "$HOME/emsdk/emsdk" activate "$EMSDK_VERSION"
+            rm -rf "$HOME/emsdk/downloads"           # the archives: not worth caching
+          fi
+          . "$HOME/emsdk/emsdk_env.sh" >/dev/null 2>&1   # PATH, EMSDK, EMSDK_NODE: kept for the later steps
+          echo "$EMSDK" >> "$GITHUB_PATH"
+          echo "$EMSDK/upstream/emscripten" >> "$GITHUB_PATH"
+          echo "EMSDK=$EMSDK" >> "$GITHUB_ENV"
+          echo "EMSDK_NODE=$EMSDK_NODE" >> "$GITHUB_ENV"
+          emcc --version | head -1
+
+      - name: The emulator and the site
+        env:
+          PYTHON: /usr/bin/python3
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          # the emulator: the same source, in the browser
+          ./build.sh --web --release "$VERSION"
+          /usr/bin/python3 base/tools/make_site.py app "app/build/fm1-violioliolol-$VERSION.fwsc" "$VERSION" site
+          /usr/bin/python3 tools/site_style.py site    # the project's look over fm1-base's pages
+          /usr/bin/python3 tools/site_latest.py site   # a stable name for the package, so a catalogue's link keeps working
+
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: site
 
-      - name: Deploy
-        id: deployment
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
         uses: actions/deploy-pages@v4

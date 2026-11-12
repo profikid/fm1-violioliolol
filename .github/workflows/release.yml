@@ -3,8 +3,9 @@
 # with build provenance (an attestation), so the Firmware Hub shows it as "Built from source on GitHub" and anyone
 # can check that the .fwsc they install is the one this commit builds.
 #
-# A tag vX.Y is the release: the builder makes the package from that commit, attests it, and the release is published
-# with the attested package.
+# A tag vX.Y is the release: the builder makes the package from that commit, attests it, the release is published with
+# the attested package, and the site (.github/workflows/pages.yml: front page, web installer, emulator, manual) is built
+# from that same package, so the site and the Hub serve the same bytes.
 #
 # Merging to main does not release: .github/workflows/ci.yml builds and tests there. The release's notes are
 # docs/hub/notes_vXYY.md (v0.1 -> notes_v001.md), if there is one; without it the release keeps GitHub's changelog.
@@ -153,3 +154,14 @@ jobs:
           if [[ "$version" != *-* ]]; then args+=(--latest); fi
           gh release edit "$GITHUB_REF_NAME" "${args[@]}"
 
+  site:
+    needs: [prepare, verify]
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/pages.yml
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+      package-from: artifact

@@ -7,7 +7,7 @@
   "tagline": "Real-time physical modelling strings for the M-VAVE FM-1",
   "description": "fm1-violioliolol turns the M-VAVE FM-1 into a physical-modelling string instrument: no samples, every note is a computed vibrating string. Nineteen instruments in four families: basses, guitars, bowed strings and folk strings (harp, mandolin, banjo, koto, zither). Plucked strings are Karplus-Strong waveguides with stiffness, pluck and pickup position and a modal body; bowed strings are a nonlinear stick-slip waveguide with bow pressure, speed, position and vibrato. Up to twelve voices, key velocity and pressure, MIDI control and sixteen user presets. Experimental.",
   "tags": ["synth", "experimental"],
-  "install": "https://github.com/profikid/fm1-violioliolol/releases/latest",
+  "install": "https://profikid.github.io/fm1-violioliolol/install/",
   "site": "https://profikid.github.io/fm1-violioliolol/",
   "source": "https://github.com/profikid/fm1-violioliolol",
   "screenshot": "docs/img/card.png",
