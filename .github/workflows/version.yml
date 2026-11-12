@@ -3,7 +3,7 @@
 # and starts the release (.github/workflows/release.yml) on that tag.
 #
 #   patch  the default: v0.1 -> v0.1.1 -> v0.1.2
-#   minor  "[minor]" in a commit message or the PR title: v0.1.2 -> v0.2
+#   minor  "[minor]" in the PR title or a commit's subject line (never its body): v0.1.2 -> v0.2
 #   major  "[major]": v0.2 -> v1.0
 #   none   "[skip release]"
 #
@@ -53,9 +53,9 @@ jobs:
           set -euo pipefail
           # what was pushed: from the previous head of main, or (a first push, a manual run) the head alone
           if [[ -n "${BEFORE:-}" && ! "$BEFORE" =~ ^0+$ ]] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
-            git log --format=%B "$BEFORE..$GITHUB_SHA" > "$RUNNER_TEMP/messages"
+            git log --format=%s%n%b%x1e "$BEFORE..$GITHUB_SHA" > "$RUNNER_TEMP/messages"
           else
-            git log -1 --format=%B "$GITHUB_SHA" > "$RUNNER_TEMP/messages"
+            git log -1 --format=%s%n%b%x1e "$GITHUB_SHA" > "$RUNNER_TEMP/messages"
           fi
           args=(--messages "$RUNNER_TEMP/messages" --head "$GITHUB_SHA")
           if [[ -n "${BUMP:-}" ]]; then args+=(--bump "$BUMP"); fi
