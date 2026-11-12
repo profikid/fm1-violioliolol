@@ -12,6 +12,6 @@ The first release of fm1-violioliolol: a physical-modelling string instrument fo
 - Velocity and pressure from the keys; MIDI pitch bend, mod wheel, CC7, CC11, sustain, pressure, CC16–23 for the knobs, program change.
 - 16 user preset slots, CRC-checked in the store.
 
-**Install:** with the [web installer](https://profikid.github.io/fm1-violioliolol/install/) (Chrome or Edge, USB), or `fm1-violioliolol-0.1.fwsc` with the Firmware Hub. [Try it in the browser](https://profikid.github.io/fm1-violioliolol/emu/) first. The firmware never touches the bootloader; the installer's m-bootloader box is opt-in. The package is built from source on GitHub and attested: `gh attestation verify fm1-violioliolol-0.1.fwsc --repo profikid/fm1-violioliolol`.
+**Install:** with the [web installer](https://profikid.github.io/fm1-violioliolol/install/) (Chrome or Edge, USB), or the `.fwsc` below with the Firmware Hub. [Try it in the browser](https://profikid.github.io/fm1-violioliolol/emu/) first. The firmware never touches the bootloader; the installer's m-bootloader box is opt-in. The package is built from source on GitHub and attested: `gh attestation verify fm1-violioliolol-<version>.fwsc --repo profikid/fm1-violioliolol`.
 
 [Manual](https://profikid.github.io/fm1-violioliolol/manual/) · [PRD and status](https://github.com/profikid/fm1-violioliolol/blob/main/docs/PRD.md)

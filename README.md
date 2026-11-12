@@ -39,12 +39,29 @@ packages are built from source on GitHub by the shared FM-1 builder and
 carry a build attestation:
 
 ```sh
-gh attestation verify fm1-violioliolol-0.1.fwsc --repo profikid/fm1-violioliolol
+gh attestation verify fm1-violioliolol-VERSION.fwsc --repo profikid/fm1-violioliolol
 ```
 
 This firmware does not touch the bootloader or the recovery path, and the stock
 firmware can be reinstalled the usual way. The web installer also offers
 m-bootloader, an open recovery bootloader, as a separate opt-in box.
+
+## Releases
+
+Every push to `main` is a release. `.github/workflows/version.yml` tags the commit with the next version and starts
+the release on that tag, which builds the package on GitHub, attests it, publishes it, and rebuilds the site from it.
+
+| To get | Do |
+|---|---|
+| a patch release, v0.1.1 → v0.1.2 | nothing: merge to `main` |
+| a minor release, v0.1.2 → v0.2 | put `[minor]` in the PR title or a commit message |
+| a major release, v0.2 → v1.0 | put `[major]` in the PR title or a commit message |
+| no release | put `[skip release]` in the PR title or a commit message |
+| a release of the current `main` | Actions → *Next version* → *Run workflow*, and pick patch, minor or major |
+
+Release notes come from `docs/hub/notes_v<version>.md` if it exists, else for the first release of a minor line from
+`docs/hub/notes_vXYY.md` (v0.2 → `notes_v002.md`), else GitHub's changelog since the previous release. Pushing a
+version tag by hand still releases that commit.
 
 ## Build and test
 
