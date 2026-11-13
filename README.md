@@ -54,11 +54,12 @@ the release on that tag, which builds the package on GitHub, attests it, publish
 | To get | Do |
 |---|---|
 | a patch release, v0.1.1 → v0.1.2 | nothing: merge to `main` |
-| a minor release, v0.1.2 → v0.2 | put `[minor]` in the PR title or a commit message |
-| a major release, v0.2 → v1.0 | put `[major]` in the PR title or a commit message |
-| no release | put `[skip release]` in the PR title or a commit message |
+| a minor release, v0.1.2 → v0.2 | put `[minor]` in the PR title or a commit's subject line |
+| a major release, v0.2 → v1.0 | put `[major]` in the PR title or a commit's subject line |
+| no release | put `[skip release]` in the PR title or a commit's subject line |
 | a release of the current `main` | Actions → *Next version* → *Run workflow*, and pick patch, minor or major |
 
+Only those lines are read, not message bodies, so a commit can mention a marker without setting it.
 Release notes come from `docs/hub/notes_v<version>.md` if it exists, else for the first release of a minor line from
 `docs/hub/notes_vXYY.md` (v0.2 → `notes_v002.md`), else GitHub's changelog since the previous release. Pushing a
 version tag by hand still releases that commit.

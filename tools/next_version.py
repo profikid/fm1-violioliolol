@@ -8,10 +8,13 @@ Prints the version (no "v"), or "skip". The tags are vX.Y or vX.Y.Z (a suffix su
 not counted); fm1-base's build.py --release takes up to two digits a part.
 
   patch  vX.Y or vX.Y.Z  ->  X.Y.(Z+1)      the default: every push to main
-  minor  ->  X.(Y+1)                        "[minor]" in a commit message or the PR title
+  minor  ->  X.(Y+1)                        "[minor]" in a commit's subject line or the PR title
   major  ->  (X+1).0                        "[major]"
 
-"[skip release]" (or "[no release]") in a message releases nothing. --bump, given by a person running the workflow,
+"[skip release]" (or "[no release]") there releases nothing. Only those lines count, never a message's body, so a
+commit can describe the markers without setting one. The messages file holds `git log --format=%s%n%b%x1e`: each
+commit's subject and body, ended by an ASCII record separator. For a merge commit ("Merge pull request #N ..."), the
+first line of its body is the PR title, and that is the line read. --bump, given by a person running the workflow,
 wins over the messages and over a skip. A commit that already has a version tag is not released again: "skip"."""
 import argparse
 import re
@@ -35,8 +38,23 @@ def latest(tags):
     return max(versions) if versions else None
 
 
+def marker_lines(messages):
+    """the subject of each commit, or for a GitHub merge commit the PR title under it"""
+    lines = []
+    for record in messages.split("\x1e"):
+        rows = [r.strip() for r in record.strip().splitlines()]
+        if not rows or not rows[0]:
+            continue
+        lines.append(rows[0])
+        if rows[0].startswith("Merge pull request") or rows[0].startswith("Merge branch"):
+            title = next((r for r in rows[1:] if r), "")
+            if title:
+                lines.append(title)
+    return lines
+
+
 def bump_from(messages):
-    text = messages.lower()
+    text = "\n".join(marker_lines(messages)).lower()
     if "[skip release]" in text or "[no release]" in text:
         return "skip"
     if "[major]" in text:
