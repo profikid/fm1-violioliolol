@@ -98,9 +98,13 @@ static const char *const PARAM_NAME[PM_PARAM_COUNT] = {
 };
 static const char *const STYLE_NAME[4] = {"FINGER", "PICK", "SLAP", "HAMMER"};
 
-/* The bodies' modes: frequency, Q, gain. From the usual signature modes of
- * each instrument (air, top plate, back, the bridge hill); starting points
- * to be tuned by ear on the device. */
+/* The bodies' signature modes: frequency, Q, gain; the body fills in a dense
+ * cloud of damped modes above them, shaped by these (body_model.c). The
+ * bowed family follows the measured violin: the air mode A0 near 275 Hz, the
+ * main plate pair B1- and B1+ near 470 and 540 Hz in opposite phase, nothing
+ * near 1 kHz (so the cloud dips at 1.2 .. 1.6 kHz) and the broad bridge hill
+ * near 2.5 kHz; viola, cello and contrabass scaled to their size. Starting
+ * points to be tuned by ear. */
 static const pm_body_mode_t BODY_NYLON[] = {
     {98.0f, 22.0f, 1.0f}, {196.0f, 18.0f, -0.7f}, {285.0f, 14.0f, 0.5f}, {420.0f, 12.0f, 0.35f}, {620.0f, 10.0f, 0.2f}};
 static const pm_body_mode_t BODY_STEEL[] = {
@@ -111,17 +115,17 @@ static const pm_body_mode_t BODY_ARCHTOP[] = {
 static const pm_body_mode_t BODY_UPRIGHT[] = {
     {62.0f, 14.0f, 1.0f}, {104.0f, 16.0f, -0.8f}, {160.0f, 12.0f, 0.6f}, {245.0f, 10.0f, 0.4f}, {420.0f, 8.0f, 0.2f}};
 static const pm_body_mode_t BODY_VIOLIN[] = {
-    {275.0f, 18.0f, 1.0f}, {460.0f, 22.0f, -0.9f}, {550.0f, 20.0f, 0.8f}, {700.0f, 10.0f, 0.4f},
-    {1050.0f, 8.0f, 0.4f}, {2600.0f, 3.0f, 0.6f}};
+    {275.0f, 20.0f, 0.7f}, {470.0f, 25.0f, -1.0f}, {540.0f, 25.0f, 0.9f}, {720.0f, 12.0f, 0.35f},
+    {2500.0f, 2.5f, 1.0f}, {4000.0f, 4.0f, 0.35f}};
 static const pm_body_mode_t BODY_VIOLA[] = {
-    {220.0f, 18.0f, 1.0f}, {370.0f, 20.0f, -0.9f}, {450.0f, 18.0f, 0.7f}, {600.0f, 10.0f, 0.4f},
-    {900.0f, 8.0f, 0.4f}, {2200.0f, 3.0f, 0.5f}};
+    {230.0f, 20.0f, 0.7f}, {390.0f, 24.0f, -1.0f}, {450.0f, 24.0f, 0.9f}, {600.0f, 12.0f, 0.35f},
+    {2100.0f, 2.5f, 0.9f}, {3400.0f, 4.0f, 0.3f}};
 static const pm_body_mode_t BODY_CELLO[] = {
-    {98.0f, 16.0f, 1.0f}, {175.0f, 20.0f, -0.9f}, {222.0f, 18.0f, 0.7f}, {320.0f, 10.0f, 0.4f},
-    {500.0f, 8.0f, 0.4f}, {1500.0f, 3.0f, 0.5f}};
+    {100.0f, 18.0f, 0.8f}, {180.0f, 22.0f, -1.0f}, {220.0f, 22.0f, 0.9f}, {330.0f, 12.0f, 0.4f},
+    {1300.0f, 2.5f, 0.7f}, {2400.0f, 4.0f, 0.25f}};
 static const pm_body_mode_t BODY_CONTRABASS[] = {
-    {60.0f, 14.0f, 1.0f}, {100.0f, 18.0f, -0.9f}, {150.0f, 14.0f, 0.6f}, {220.0f, 10.0f, 0.4f},
-    {330.0f, 8.0f, 0.3f}, {900.0f, 3.0f, 0.4f}};
+    {60.0f, 16.0f, 0.8f}, {100.0f, 20.0f, -1.0f}, {140.0f, 20.0f, 0.9f}, {220.0f, 12.0f, 0.4f},
+    {800.0f, 2.5f, 0.6f}, {1500.0f, 4.0f, 0.25f}};
 static const pm_body_mode_t BODY_HARP[] = {
     {130.0f, 20.0f, 0.8f}, {260.0f, 16.0f, -0.5f}, {410.0f, 12.0f, 0.3f}};
 static const pm_body_mode_t BODY_MANDOLIN[] = {
@@ -269,9 +273,11 @@ void pm_patch_string_params(const pm_patch_t *patch, const uint8_t *value, int32
     shorter = fretted(patch, note);
     /* high strings ring shorter than low ones, as real ones do */
     track = pm_clampf(pm_exp2f((52.0f - (float)note) * (1.0f / 36.0f)), 0.25f, 2.0f);
-    out->decay_t60 = 0.4f * pm_exp2f(unit(value, PM_P_DECAY) * 5.0f) * track * (1.0f - 0.6f * damping);
+    out->decay_t60 = 0.6f * pm_exp2f(unit(value, PM_P_DECAY) * 5.0f) * track * (1.0f - 0.6f * damping);
     out->release_t60 = 0.04f * pm_exp2f(unit(value, PM_P_RELEASE) * 5.0f);
-    out->brightness = pm_clampf(1.0f - damping, 0.0f, 0.97f);
+    /* the highs' decay over the fundamental's: nylon about 0.18, steel 0.25,
+     * a dead upright 0.12 (string_model.h: 2^(5 brightness - 5)) */
+    out->brightness = pm_clampf(0.75f * (1.0f - damping), 0.0f, 0.97f);
     out->stiffness = unit(value, PM_P_STIFFNESS);
     out->pluck_position = pm_clampf((0.03f + 0.47f * unit(value, PM_P_PLUCK_POS)) * shorter, 0.0f, 0.95f);
     out->hardness = unit(value, PM_P_INTENSITY);

@@ -100,6 +100,8 @@ void pm_bowed_reset(pm_bowed_voice_t *voice)
         voice->bridge[i] = 0.0f;
     voice->filter_state = 0.0f;
     voice->envelope = 0.0f;
+    voice->hair_noise = 0.0f;
+    voice->wander = 0.0f;
     voice->vibrato_sin = 0.0f;
     voice->vibrato_cos = 1.0f;
     voice->vibrato_onset = 0.0f;
@@ -115,6 +117,7 @@ void pm_bowed_init(pm_bowed_voice_t *voice)
         return;
     voice->period = 0.0f;
     voice->pitch_ratio = 1.0f;
+    voice->rng = 0x2545F491u;
     voice->neck_delay = 1.0f;
     voice->bridge_delay = 1.0f;
     voice->neck_target = 1.0f;
@@ -224,7 +227,24 @@ void pm_bowed_render(pm_bowed_voice_t *voice, float *mono, uint32_t frames)
             if (voice->envelope < 0.0f)
                 voice->envelope = 0.0f;
         }
-        bow_velocity = voice->max_velocity * voice->envelope;
+        {
+            /* the hair's noise (about 2 kHz and up, 3.5 %) and the arm's
+             * wander (a few hertz, a few per cent) on the bow's speed */
+            uint32_t x = voice->rng;
+            float white;
+            x ^= x << 13;
+            x ^= x >> 17;
+            x ^= x << 5;
+            voice->rng = x;
+            white = (float)(x >> 8) * (2.0f / 16777216.0f) - 1.0f;
+            voice->hair_noise += 0.25f * (white - voice->hair_noise);
+            voice->wander += 0.0004f * (white - voice->wander);
+        }
+        /* the hair's rosin noise is loudest while the bow bites, before the
+         * string settles into its Helmholtz motion: 25 % of the speed at the
+         * first touch, 3.5 % once it has its speed */
+        bow_velocity = voice->max_velocity * voice->envelope *
+                       (1.0f + (0.035f + 0.22f * (1.0f - voice->envelope)) * voice->hair_noise + 2.0f * voice->wander);
 
         /* vibrato: the finger rolls on the string, a little after the note starts */
         neck_delay = voice->neck_delay;

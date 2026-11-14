@@ -22,10 +22,15 @@ static void run(pm_engine_t *e, float *out, uint32_t frames)
     }
 }
 
+/* An engine with an instrument, dry and without the per-note variation, so
+ * the mechanics can be measured exactly; test_room_and_human has those. */
 static void fresh(pm_engine_t *e, uint32_t patch)
 {
     pm_engine_init(e, 1u);
     pm_engine_set_patch(e, pm_factory_patch(patch));
+    pm_engine_control(e, 91u, 0u);
+    e->room.wet = 0.0f;
+    e->human = 0u;
 }
 
 static uint32_t find_patch(const char *name)
@@ -229,18 +234,20 @@ static int test_midi(void)
             const double hz = 220.0;
             uint32_t age;
             fresh(&engine, find_patch(NAMES[k]));
+            /* each position measured 0.2 .. 0.65 s after the wheel moves:
+             * long enough to have glided, short of a plucked string's end */
             pm_engine_midi(&engine, 0x90u, 57u, 110u);
-            run(&engine, buffer, SECOND);
+            run(&engine, buffer, SECOND * 2u / 3u);
             age = engine.voice[0].age;
-            CHECK(fabs(t_cents(t_pitch(buffer + SECOND / 2u, 20000u, hz), hz)) < 10.0, "an unbent note is in tune");
+            CHECK(fabs(t_cents(t_pitch(buffer + SECOND / 5u, 20000u, hz), hz)) < 10.0, "an unbent note is in tune");
             pm_engine_midi(&engine, 0xE0u, 0x7Fu, 0x7Fu);       /* wheel fully up: +2 semitones */
-            run(&engine, buffer, SECOND);
-            bent = t_cents(t_pitch(buffer + SECOND / 2u, 20000u, hz * 1.122462), hz);
+            run(&engine, buffer, SECOND * 2u / 3u);
+            bent = t_cents(t_pitch(buffer + SECOND / 5u, 20000u, hz * 1.122462), hz);
             CHECK(fabs(bent - 200.0) < 12.0, "the wheel fully up is two semitones");
             CHECK(engine.voice[0].age == age && engine.voice[0].state == PM_VOICE_HELD, "a bend does not restart the voice");
             pm_engine_midi(&engine, 0xE0u, 0u, 0u);             /* fully down */
-            run(&engine, buffer, SECOND);
-            bent = t_cents(t_pitch(buffer + SECOND / 2u, 20000u, hz / 1.122462), hz);
+            run(&engine, buffer, SECOND * 2u / 3u);
+            bent = t_cents(t_pitch(buffer + SECOND / 5u, 20000u, hz / 1.122462), hz);
             CHECK(fabs(bent + 200.0) < 12.0, "the wheel fully down is two semitones down");
             /* a note started with the wheel off centre starts bent */
             pm_engine_midi(&engine, 0x80u, 57u, 0u);
@@ -522,6 +529,80 @@ static int test_unison(void)
     return 0;
 }
 
+/* The room (CC91, PM_EV_ROOM) and the per-note variation. */
+static int test_room_and_human(void)
+{
+    double dry_tail, wet_tail;
+    uint32_t i, differ = 0u;
+    /* the engine starts with a little room */
+    pm_engine_init(&engine, 1u);
+    CHECK(engine.room_amount == PM_DEFAULT_ROOM && engine.room.wet > 0.0f, "a little room by default");
+    CHECK(engine.human == PM_DEFAULT_HUMAN, "and a little variation");
+    /* a room is heard after the string: a tail once the note is damped */
+    fresh(&engine, find_patch("NYLON"));
+    pm_engine_note_on(&engine, 64u, 110u);
+    run(&engine, buffer, SECOND / 4u);
+    pm_engine_control(&engine, 120u, 0u);
+    run(&engine, buffer, SECOND / 2u);
+    dry_tail = t_rms(buffer + 4096u, 8192u);
+    fresh(&engine, find_patch("NYLON"));
+    pm_engine_control(&engine, 91u, 127u);
+    pm_engine_post(&engine, PM_EV_ROOM, 1u, 127u);
+    run(&engine, buffer, BLOCK);
+    pm_engine_note_on(&engine, 64u, 110u);
+    run(&engine, buffer, SECOND / 4u);
+    pm_engine_control(&engine, 120u, 0u);
+    run(&engine, buffer, SECOND / 2u);
+    wet_tail = t_rms(buffer + 4096u, 8192u);
+    CHECK(wet_tail > 20.0 * dry_tail + 1.0e-4, "the room rings on after the string is damped");
+    run(&engine, buffer, SECOND * 4u);
+    CHECK(t_peak(buffer + SECOND * 3u, SECOND) < 1.0e-3, "and dies away");
+    /* the most room, the most notes: still inside full scale */
+    for (i = 0; i < 12u; ++i)
+        pm_engine_note_on(&engine, 40u + i * 3u, 127u);
+    run(&engine, buffer, SECOND * 2u);
+    CHECK(t_finite(buffer, SECOND * 2u) && t_peak(buffer, SECOND * 2u) <= 1.0, "a full room stays in bounds");
+    /* settings out of range are clamped; size changes clear the lines */
+    pm_engine_post(&engine, PM_EV_ROOM, 1u, 255u);
+    pm_engine_post(&engine, PM_EV_ROOM, 9u, 50u);
+    run(&engine, buffer, BLOCK);
+    CHECK(engine.room_size == 127u, "a room setting is clamped");
+    /* variation: the same note twice differs a little with it, not at all without */
+    for (i = 0; i < 2u; ++i) {
+        pm_engine_t *e = i ? &twin : &engine;
+        fresh(e, find_patch("STEEL"));
+        e->human = 127u;
+        pm_engine_note_on(e, 64u, 100u);
+        if (i)
+            pm_engine_note_off(e, 64u);
+    }
+    /* the second engine plays the note again: its next note is the second variation */
+    run(&twin, other, SECOND);
+    fresh(&engine, find_patch("STEEL"));
+    fresh(&twin, find_patch("STEEL"));
+    engine.human = twin.human = 127u;
+    pm_engine_note_on(&engine, 64u, 100u);
+    pm_engine_note_on(&twin, 60u, 100u);        /* a note first, so the next one is varied otherwise */
+    pm_engine_note_on(&twin, 64u, 100u);
+    pm_engine_note_off(&twin, 60u);
+    run(&engine, buffer, SECOND / 2u);
+    run(&twin, other, SECOND / 2u);
+    for (i = 0; i < SECOND / 2u; ++i)
+        differ += fabs((double)buffer[i] - (double)other[i]) > 1.0e-4;
+    CHECK(differ > SECOND / 8u, "two plucks of the same note differ with variation on");
+    fresh(&engine, find_patch("STEEL"));
+    fresh(&twin, find_patch("STEEL"));
+    pm_engine_note_on(&engine, 64u, 100u);
+    pm_engine_note_on(&twin, 64u, 100u);
+    run(&engine, buffer, SECOND / 2u);
+    run(&twin, other, SECOND / 2u);
+    for (i = 0; i < SECOND / 2u; ++i)
+        CHECK(buffer[i] == other[i], "without variation the same note is the same");
+    printf("  room and variation: ok (tail x%.0f with the room up; plucks differ in %u samples)\n",
+           wet_tail / (dry_tail + 1.0e-9), (unsigned)differ);
+    return 0;
+}
+
 /* Parameter extremes and a storm of MIDI: finite, in bounds, no faults. */
 static int test_storm(void)
 {
@@ -570,7 +651,7 @@ int main(void)
            (unsigned long)pm_engine_bytes(), (unsigned)PM_MAX_VOICES, (unsigned long)pm_engine_voice_slot_bytes(),
            (unsigned long)pm_string_voice_bytes(), (unsigned long)pm_bowed_voice_bytes());
     if (test_instruments() || test_allocator() || test_click_safe() || test_midi() || test_queue() ||
-        test_polyphony() || test_bench_and_shed() || test_faults() || test_unison() || test_storm())
+        test_polyphony() || test_bench_and_shed() || test_faults() || test_unison() || test_room_and_human() || test_storm())
         return 1;
     printf("engine: PASS\n");
     return 0;

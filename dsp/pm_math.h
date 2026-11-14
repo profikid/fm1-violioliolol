@@ -75,6 +75,27 @@ static inline float pm_exp2f(float x)
            (1.0f / 24.0f + f * (1.0f / 120.0f + f * (1.0f / 720.0f)))))));
 }
 
+/* log2(x) for x > 0 (0 or less, or not a number: -100). Error below 1e-6 over the normal range. */
+static inline float pm_log2f(float x)
+{
+    union { float f; uint32_t u; } bits;
+    float m, t;
+    int32_t e;
+    if (!(x > 0.0f))
+        return -100.0f;
+    bits.f = x;
+    e = (int32_t)((bits.u >> 23) & 0xFFu) - 127;
+    bits.u = (bits.u & 0x007FFFFFu) | 0x3F800000u;   /* mantissa in [1, 2) */
+    m = bits.f;
+    if (m > 1.41421356f) {                              /* centre it on 1: [0.707, 1.414) */
+        m *= 0.5f;
+        ++e;
+    }
+    t = (m - 1.0f) / (m + 1.0f);                        /* ln m = 2 atanh t, |t| < 0.172 */
+    m = t * t;
+    return (float)e + 2.88539008f * t * (1.0f + m * (1.0f / 3.0f + m * (1.0f / 5.0f + m * (1.0f / 7.0f + m * (1.0f / 9.0f)))));
+}
+
 /* e^x */
 static inline float pm_expf(float x)
 {

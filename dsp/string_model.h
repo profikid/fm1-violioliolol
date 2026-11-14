@@ -2,7 +2,8 @@
  * fm1-violioliolol: plucked / struck string voice.
  *
  * An extended Karplus-Strong digital waveguide: a fractional delay loop
- * (third-order Lagrange interpolation) with a one-zero loss filter, an allpass dispersion chain (stiffness), a
+ * (third-order Lagrange interpolation) with a one-pole loss filter designed
+ * from two decay times, so the high partials die faster than the low ones, an allpass dispersion chain (stiffness), a
  * pluck-position comb on the excitation, a pickup-position comb on the
  * output and an optional amplitude limit in the loop (fret buzz, slap).
  *
@@ -20,9 +21,9 @@
 /* Excitation styles. */
 enum {
     PM_EXCITE_NOISE = 0,   /* plain noise burst: the classic Karplus-Strong pluck */
-    PM_EXCITE_FINGER,      /* soft, rounded pluck */
-    PM_EXCITE_PICK,        /* bright pluck with a short click */
-    PM_EXCITE_SLAP,        /* hard, bright, the string rattles on the frets at first */
+    PM_EXCITE_FINGER,      /* the string pulled aside by a finger: a triangle with a broad, rounded corner */
+    PM_EXCITE_PICK,        /* by a pick: a sharp corner, and a little scrape */
+    PM_EXCITE_SLAP,        /* by the thumb, hard: the string rattles on the frets at first */
     PM_EXCITE_HAMMER,      /* struck: a smooth pulse instead of noise */
     PM_EXCITE_COUNT
 };
@@ -31,10 +32,11 @@ enum {
 typedef struct {
     float decay_t60;            /* seconds to decay 60 dB while held; <= 0 keeps the note_on feedback */
     float release_t60;          /* seconds to decay 60 dB after note-off; <= 0: note-off does nothing */
-    float brightness;           /* 0 (two-point average, dark) .. 1 (no high-frequency loss) */
+    float brightness;           /* 0 .. 1: how long the highs ring next to the fundamental. The
+                                 * decay at 3 kHz is 1/32 (0) to all (1) of decay_t60's */
     float stiffness;            /* 0 (ideal string) .. 1 (stiff: partials go sharp) */
     float pluck_position;       /* 0 (off) .. 0.5: where along the string it is excited */
-    float hardness;             /* 0 (soft) .. 1 (hard): the excitation's brightness */
+    float hardness;             /* 0 (soft) .. 1 (hard): the contact's width, the excitation's brightness */
     float velocity_to_hardness; /* 0 .. 1: how much velocity adds to hardness */
     float pickup_position;      /* 0 (off) .. 0.5: where along the string the pickup sits */
     float pickup_blend;         /* 0 (string output) .. 1 (pickup output) */
@@ -48,11 +50,13 @@ typedef struct {
     float delay_target;         /* where delay_samples glides to (pitch bend, vibrato) */
     float period;               /* the note's period in samples, unbent */
     float frequency_hz;
-    float feedback;
+    float feedback;             /* the loop's gain now; it glides to feedback_target */
+    float feedback_target;
     float held_feedback;
     float release_feedback;
-    float loss_b;               /* loss filter: y = (1 - b) x + b x[n-1] */
+    float loss_a;               /* loss filter: y = (1 - a) x + a y[n-1], then times the feedback */
     float damping_state;
+    float bright_ratio;         /* T60 at 3 kHz over T60 at the fundamental */
     float dispersion_a;
     float dispersion_x[PM_STRING_DISPERSION_STAGES];
     float dispersion_y[PM_STRING_DISPERSION_STAGES];
@@ -61,6 +65,14 @@ typedef struct {
     float excite_gain;
     float excite_lp;            /* excitation lowpass coefficient, 0 .. 1 */
     float excite_state[2];
+    float excite_state2[2];     /* the shape's second lowpass stage */
+    float excite_apex;          /* the shaped pluck: where the triangle peaks, 0 .. 1 */
+    uint32_t excite_span;       /* its length, one period; what follows is the rounding's tail,
+                                 * which wraps onto the next period as the string carries it */
+    float excite_noise;         /* and how much scrape is mixed into it */
+    float out_prev;             /* the string's last output: the bridge force is its change */
+    float out_scale;            /* the force at a level independent of the pitch; 0: the
+                                 * noise style, whose output is the string itself */
     float pickup_blend;
     float buzz_limit;           /* 0: off */
     float buzz_release_limit;

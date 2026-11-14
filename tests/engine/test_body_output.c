@@ -91,7 +91,7 @@ static int test_body(void)
     pm_body_configure(&body, BAD, 6u);
     CHECK(body.modes == 0u, "invalid modes must be left out");
     pm_body_configure(&body, VIOLIN, 100u);
-    CHECK(body.modes == PM_BODY_MAX_MODES, "the mode count is capped");
+    CHECK(body.signature == PM_BODY_MAX_MODES && body.modes <= PM_BODY_BANK, "the mode count is capped");
     pm_body_set_wet(&body, (float)NAN);
     CHECK(body.wet_target == 0.0f, "a wet amount that is not a number is none");
     printf("  body: ok (mode at %.1f Hz for 440; at/off mode x%.1f; full body %.2fx rms)\n",

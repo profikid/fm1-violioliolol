@@ -4,7 +4,9 @@
  * Twelve preallocated voices, each a plucked or a bowed string; a
  * deterministic allocator with click-safe stealing; the MIDI performance
  * controls (velocity, pitch bend, CC1, CC7, CC11, CC64, channel pressure);
- * the body and the output stage with headroom and a limiter.
+ * the body, a room, and the output stage with headroom and a limiter. Each
+ * note varies a little (where it is plucked, how hard, a few cents), as a
+ * player's do; the variation is deterministic.
  *
  * Two contexts use it:
  *   the audio task   owns every bit of live DSP state. It calls
@@ -33,6 +35,10 @@
 #define PM_FADE_FRAMES 96u              /* a stolen voice fades out over this: 2.2 ms */
 #define PM_MIX_HEADROOM 0.3f            /* every voice is mixed in at this gain */
 #define PM_DEFAULT_POLYPHONY 8u
+#define PM_DEFAULT_ROOM 34u             /* a small room, lightly */
+#define PM_DEFAULT_ROOM_SIZE 48u
+#define PM_DEFAULT_ROOM_TONE 64u
+#define PM_DEFAULT_HUMAN 40u
 
 enum { PM_VOICE_IDLE, PM_VOICE_HELD, PM_VOICE_SUSTAINED, PM_VOICE_RELEASED, PM_VOICE_STEALING };
 
@@ -49,7 +55,8 @@ enum {
     PM_EV_POLYPHONY,        /* b 1..PM_MAX_VOICES */
     PM_EV_BENCH,            /* b 0..PM_MAX_VOICES: that many voices held and kept running (0: off) */
     PM_EV_SHED,             /* the render is over budget: one voice and one of polyphony less */
-    PM_EV_BEND_RANGE        /* b 1..24 semitones */
+    PM_EV_BEND_RANGE,       /* b 1..24 semitones */
+    PM_EV_ROOM              /* a 0 amount, 1 size, 2 tone, 3 humanize; b 0..127 */
 };
 
 typedef struct {
@@ -77,6 +84,7 @@ typedef struct {
 typedef struct {
     pm_engine_voice_t voice[PM_MAX_VOICES];
     pm_body_t body;
+    pm_room_t room;
     pm_output_t output;
     float scratch[PM_ENGINE_BLOCK];
     pm_patch_t patch;                   /* the playing patch: the audio task's */
@@ -96,6 +104,11 @@ typedef struct {
     uint8_t volume;
     uint8_t expression;
     uint8_t sustain;
+    uint8_t room_amount;                /* 0..127 each: the room, and how much each note varies */
+    uint8_t room_size;
+    uint8_t room_tone;
+    uint8_t human;
+    uint32_t human_rng;
     uint8_t polyphony;
     uint8_t bench;
     uint8_t dirty;                      /* the values changed: push them to the models */

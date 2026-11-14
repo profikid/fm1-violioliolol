@@ -113,13 +113,32 @@ static void release_voice(pm_engine_voice_t *vc)
 }
 
 /* Start a note on a voice that is silent. The audio task only. */
+/* -1 .. 1, from the engine's own generator: the same performance varies the
+ * same way every time. */
+static float human_random(pm_engine_t *e)
+{
+    uint32_t x = e->human_rng;
+    x ^= x << 13;
+    x ^= x >> 17;
+    x ^= x << 5;
+    e->human_rng = x;
+    return (float)(x >> 8) * (2.0f / 16777216.0f) - 1.0f;
+}
+
 static void start_voice(pm_engine_t *e, pm_engine_voice_t *vc, uint32_t note, uint32_t velocity,
                         uint32_t string)
 {
     float v = (float)(velocity > 127u ? 127u : velocity) * (1.0f / 127.0f);
     float pitch = (float)note;
+    /* no player plucks or bows two notes alike: a little of where, how hard,
+     * and a few cents, scaled by humanize (at most +-12 %, +-15 %, +-4 cents) */
+    const float h = (float)e->human * (1.0f / 127.0f);
+    const float r_pos = h * human_random(e), r_hard = h * human_random(e);
+    const float r_level = h * human_random(e), r_pitch = h * human_random(e);
     int ok;
     v *= 0.25f + 0.75f * v;             /* soft playing is quieter than a straight line gives */
+    v = pm_clampf(v * (1.0f + 0.15f * r_level), 0.0f, 1.0f);
+    pitch += 0.04f * r_pitch;
     if (e->patch.unison > 1u)           /* a course: the two strings either side of the note */
         pitch += (string ? 0.005f : -0.005f) * (float)e->patch.detune_cents;
     vc->note = (uint8_t)note;
@@ -138,6 +157,8 @@ static void start_voice(pm_engine_t *e, pm_engine_voice_t *vc, uint32_t note, ui
         vc->engine = PM_ENGINE_BOW;
         vc->base_note = fold(pitch, PM_BOWED_LOW_NOTE, PM_BOWED_HIGH_NOTE);
         bowed_params(e, &params);
+        params.bow_position *= 1.0f + 0.08f * r_pos;
+        params.bow_pressure = pm_clampf(params.bow_pressure + 0.06f * r_hard, 0.0f, 1.0f);
         pm_bowed_configure(&vc->model.bowed, &params);
         pm_bowed_set_pitch_ratio(&vc->model.bowed, e->bend_ratio);
         ok = pm_bowed_note_on(&vc->model.bowed, pm_note_hz(vc->base_note), v);
@@ -148,6 +169,8 @@ static void start_voice(pm_engine_t *e, pm_engine_voice_t *vc, uint32_t note, ui
         vc->engine = PM_ENGINE_PLUCK;
         vc->base_note = fold(pitch, PM_STRING_LOW_NOTE, PM_STRING_HIGH_NOTE);
         pm_patch_string_params(&e->patch, e->value, (int32_t)note, &params);
+        params.pluck_position *= 1.0f + 0.12f * r_pos;
+        params.hardness = pm_clampf(params.hardness + 0.12f * r_hard, 0.0f, 1.0f);
         pm_string_configure(&vc->model.string, &params);
         ok = pm_string_note_on(&vc->model.string, pm_note_hz(vc->base_note), 0.995f, v);
         if (ok == 0) {
@@ -327,6 +350,12 @@ static void set_bend(pm_engine_t *e, uint32_t bend)
                              (float)e->patch.bend_range * (1.0f / 12.0f));
 }
 
+static void set_room(pm_engine_t *e)
+{
+    pm_room_set(&e->room, (float)e->room_amount * (1.0f / 127.0f), (float)e->room_size * (1.0f / 127.0f),
+                (float)e->room_tone * (1.0f / 127.0f));
+}
+
 void pm_engine_control(pm_engine_t *e, uint32_t controller, uint32_t value)
 {
     uint32_t i;
@@ -349,6 +378,10 @@ void pm_engine_control(pm_engine_t *e, uint32_t controller, uint32_t value)
         break;
     case 64u:
         set_sustain(e, value >= 64u);
+        break;
+    case 91u:                           /* reverb send: the room */
+        e->room_amount = (uint8_t)value;
+        set_room(e);
         break;
     case 120u:                          /* all sound off */
         pm_engine_all_off(e);
@@ -524,6 +557,20 @@ static void handle(pm_engine_t *e, uint32_t message)
     case PM_EV_SHED:
         pm_engine_shed(e);
         break;
+    case PM_EV_ROOM: {
+        const uint8_t v = (uint8_t)(b > 127u ? 127u : b);
+        if (a == 0u)
+            e->room_amount = v;
+        else if (a == 1u)
+            e->room_size = v;
+        else if (a == 2u)
+            e->room_tone = v;
+        else if (a == 3u)
+            e->human = v;
+        if (a <= 2u)
+            set_room(e);
+        break;
+    }
     case PM_EV_BEND_RANGE:
         e->patch.bend_range = (uint8_t)(b < 1u ? 1u : b > 24u ? 24u : b);
         set_bend(e, e->bend);
@@ -664,6 +711,7 @@ static void render_block(pm_engine_t *e, float *out, uint32_t frames)
     for (i = 0; i < frames; ++i)
         out[i] *= PM_MIX_HEADROOM;
     pm_body_process(&e->body, out, frames);
+    pm_room_process(&e->room, out, frames);
     pm_output_process(&e->output, out, frames);
 
     e->active_voices = (uint8_t)active;
@@ -707,7 +755,15 @@ void pm_engine_init(pm_engine_t *e, uint32_t seed)
         vc->bench = 0u;
     }
     pm_body_init(&e->body);
+    pm_room_init(&e->room);
     pm_output_init(&e->output);
+    e->room_amount = PM_DEFAULT_ROOM;
+    e->room_size = PM_DEFAULT_ROOM_SIZE;
+    e->room_tone = PM_DEFAULT_ROOM_TONE;
+    e->human = PM_DEFAULT_HUMAN;
+    e->human_rng = (seed ? seed : 0x51A1u) * 2654435761u | 1u;
+    set_room(e);
+    e->room.wet = e->room.wet_target;
     for (i = 0; i < PM_ENGINE_BLOCK; ++i)
         e->scratch[i] = 0.0f;
     for (i = 0; i < PM_QUEUE_SIZE; ++i)

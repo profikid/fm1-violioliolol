@@ -8,7 +8,9 @@
  * string sticks to the bow, slips, and sticks again (stick-slip), which is
  * what sustains the tone. After J. O. Smith's bowed-string waveguide and its
  * STK realisation; the friction curve is the usual bounded approximation
- * (|x| + 0.75)^-4.
+ * (|x| + 0.75)^-4. The bow is not a perfect machine: its speed carries the
+ * hair's friction noise and a slow wander, so no two periods are quite
+ * alike, as no bowed note's are.
  *
  * Platform-independent DSP. No allocation, I/O, locks or platform headers.
  */
@@ -61,6 +63,9 @@ typedef struct {
     float velocity;         /* the note's velocity, 0 .. 1 */
     float output_gain;      /* the bridge's velocity wave to a full-scale voice; glides */
     float output_target;
+    float hair_noise;       /* the bow hair's friction noise, lowpassed */
+    float wander;           /* and the arm's slow wander in speed and pressure */
+    uint32_t rng;
     uint16_t neck_index;
     uint16_t bridge_index;
     uint8_t active;
